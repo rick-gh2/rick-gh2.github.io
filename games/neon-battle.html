@@ -232,7 +232,7 @@ const joyBase=document.getElementById('joystick-base');
 const joyKnob=document.getElementById('joystick-knob');
 let joyActive=false,joyCenterX=0,joyCenterY=0;
 
-function updateJoystickPos(){const r=joyZone.getBoundingClientRect();joyBase.style.left='20px';joyBase.style.bottom='calc(10% + env(safe-area-inset-bottom))';}
+function updateJoystickPos(){const r=joyZone.getBoundingClientRect();joyBase.style.left='20px';joyBase.style.top='calc(30% + env(safe-area-inset-top))';}
 updateJoystickPos();window.addEventListener('resize',()=>{setTimeout(updateJoystickPos,50)});
 
 joyZone.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];const r=joyBase.getBoundingClientRect();joyCenterX=r.left+r.width/2;joyCenterY=r.top+r.height/2;joyActive=true;updateKnob(t)},{passive:false});
@@ -341,10 +341,13 @@ function update(){if(gameState!=='playing')return;
   // Update projectiles
   projectiles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;
     if(p.isPlayer){enemies.forEach(e=>{if(rectOverlap(p,e)){damageEnemy(e,p.damage);p.life=0}});if(boss&&!boss.dead&&rectOverlap(p,boss)){damageBoss(p.damage);p.life=0}
-      // Boss projectiles hit player
-      boss?.projectiles?.forEach(bp=>{if(rectOverlap(bp,player)&&player.invincible<=0){player.hp-=bp.damage;player.invincible=30;screenShakeTimer=6;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);bp.life=0;if(player.hp<=0)gameState='gameover'}})}
-    else{if(rectOverlap(p,player)&&player.invincible<=0){player.hp-=p.damage;player.invincible=30;screenShakeTimer=6;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);bp.life=0;if(player.hp<=0)gameState='gameover'}}});
+    }else{if(rectOverlap(p,player)&&player.invincible<=0){player.hp-=p.damage;player.invincible=30;screenShakeTimer=6;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);p.life=0;if(player.hp<=0)gameState='gameover'}}});
+  // Boss projectiles hit player (separate loop)
+  if(boss?.projectiles){boss.projectiles.forEach(bp=>{if(rectOverlap(bp,player)&&player.invincible<=0){player.hp-=bp.damage;player.invincible=30;screenShakeTimer=6;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);bp.life=0;if(player.hp<=0)gameState='gameover'}})}
   projectiles=projectiles.filter(p=>p.life>0&&!p.dead);
+
+  // Player bottom bounds - fall damage / death
+  if(player.y>H+200){player.hp-=50;player.invincible=45;if(player.hp<=0)gameState='gameover';else{player.x=Math.max(100,cameraX+50);player.y=H*.3;player.vy=-8}}
 
   // Boss logic
   if(boss&&!boss.dead){updateBoss()}
@@ -566,10 +569,12 @@ document.getElementById('btn-next-level').addEventListener('click',()=>{if(curre
 document.getElementById('btn-v-menu').addEventListener('click',()=>showScreen('title-screen'));
 
 function startLevel(lv){currentLevel=lv;gameState='playing';boss=null;bossSpawned=false;enemies=[];projectiles=[];particles=[];floatingTexts=[];screenShakeTimer=0;flashAlpha=0;
-  player.x=100;player.y=H*.5;player.vx=0;player.vy=0;player.hp=player.maxHp;player.energy=Math.min(30,player.maxEnergy);player.invincible=60;player.attackCooldown=0;player.dashCooldown=0;player.specialCooldown=0;player.ultimateCooldown=0;player.combo=0;player.isDashing=false;
+  player.x=100;player.y=H*.3;player.vx=0;player.vy=-5;player.hp=player.maxHp;player.energy=Math.min(30,player.maxEnergy);player.invincible=60;player.attackCooldown=0;player.dashCooldown=0;player.specialCooldown=0;player.ultimateCooldown=0;player.combo=0;player.isDashing=false;
   generatePlatforms();cameraX=0;bgOffset=0;
   document.getElementById('hud-top').style.display='flex';document.getElementById('level-indicator').textContent=`Lv.${lv+1} ${levels[lv].name}`;
-  if(lv===2)document.getElementById('boss-hud').style.display='flex';
+  if(lv>=2)document.getElementById('boss-hud').style.display='flex';
+  document.getElementById('joystick-zone').style.display='block';
+  document.getElementById('action-zone').style.display='block';
   music.start(lv);showScreen(null)}
 
 function showVictory(){gameState='victory';music.stop();playSFX('victory');unlockedLevels[currentLevel+1]=true;currentLevel++;
