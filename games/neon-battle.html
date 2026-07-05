@@ -342,8 +342,7 @@ function update(){if(gameState!=='playing')return;
   projectiles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;
     if(p.isPlayer){enemies.forEach(e=>{if(rectOverlap(p,e)){damageEnemy(e,p.damage);p.life=0}});if(boss&&!boss.dead&&rectOverlap(p,boss)){damageBoss(p.damage);p.life=0}
     }else{if(rectOverlap(p,player)&&player.invincible<=0){player.hp-=p.damage;player.invincible=30;screenShakeTimer=6;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);p.life=0;if(player.hp<=0)gameState='gameover'}}});
-  // Boss projectiles hit player (separate loop)
-  if(boss?.projectiles){boss.projectiles.forEach(bp=>{if(rectOverlap(bp,player)&&player.invincible<=0){player.hp-=bp.damage;player.invincible=30;screenShakeTimer=6;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);bp.life=0;if(player.hp<=0)gameState='gameover'}})}
+  // Boss projectiles are added to main array above
   projectiles=projectiles.filter(p=>p.life>0&&!p.dead);
 
   // Player bottom bounds - fall damage / death
@@ -391,7 +390,7 @@ function updateBoss(){if(!boss||boss.dead)return;const lv=levels[currentLevel];
     const ap=lv.bossAttackPatterns[pat];
     if(ap==='shoot'){for(let i=-2;i<=2;i++){projectiles.push({x:boss.x,y:boss.y-10,vx:-3+i*1.5,vy:i*.8,damage:12+boss.phase*4,life:90,type:'enemy',color:'#ff3c64',size:7})}}
     else if(ap==='charge'){boss.vx=boss.facing*boss.speed*3;setTimeout(()=>{if(boss)boss.vx=0},800)}
-    else if(ap==='summon'||ap==='summon_all'){for(let i=0;i<(ap==='summon_all'?4:2);i++){const ex=boss.x+Math.random()*100-50;const ey=boss.y-60-Math.random()*80;enemies.push({x:ex,y:ey,vx:-.5,b.vy:0,w:22,h:28,hp:30+boss.phase*10,maxHp:30+boss.phase*10,speed:.8,damage:8+boss.phase*2,type:'summoned',color:'#ff60c0',facing:-1,animFrame:0,animTimer:0})}}
+    else if(ap==='summon'||ap==='summon_all'){for(let i=0;i<(ap==='summon_all'?4:2);i++){const ex=boss.x+Math.random()*100-50;const ey=boss.y-60-Math.random()*80;enemies.push({x:ex,y:ey,vx:-.5,vy:0,w:22,h:28,hp:30+boss.phase*10,maxHp:30+boss.phase*10,speed:.8,damage:8+boss.phase*2,type:'summoned',color:'#ff60c0',facing:-1,animFrame:0,animTimer:0})}}
     else if(ap==='fireball'){projectiles.push({x:boss.x,y:boss.y-15,vx:-4,vy:Math.sin(Date.now()*.003)*2,damage:20+boss.phase*5,life:120,type:'enemy',color:'#ff8c00',size:12})}
     else if(ap==='teleport'){const nx=player.x+Math.random()*400-200;const ny=player.y-Math.random()*300;if(ny>50){boss.x=nx;boss.y=Math.max(80,ny);spawnParticles(boss.x,boss.y+boss.h/2,15,'#a060ff',4,.4)}}
     else if(ap==='aura'){boss.auraActive=true;setTimeout(()=>{if(boss)boss.auraActive=false},3000)}
@@ -572,18 +571,18 @@ function startLevel(lv){currentLevel=lv;gameState='playing';boss=null;bossSpawne
   player.x=100;player.y=H*.3;player.vx=0;player.vy=-5;player.hp=player.maxHp;player.energy=Math.min(30,player.maxEnergy);player.invincible=60;player.attackCooldown=0;player.dashCooldown=0;player.specialCooldown=0;player.ultimateCooldown=0;player.combo=0;player.isDashing=false;
   generatePlatforms();cameraX=0;bgOffset=0;
   document.getElementById('hud-top').style.display='flex';document.getElementById('level-indicator').textContent=`Lv.${lv+1} ${levels[lv].name}`;
-  if(lv>=2)document.getElementById('boss-hud').style.display='flex';
+  document.getElementById('boss-hud').style.display='flex';
   document.getElementById('joystick-zone').style.display='block';
   document.getElementById('action-zone').style.display='block';
   music.start(lv);showScreen(null)}
 
 function showVictory(){gameState='victory';music.stop();playSFX('victory');unlockedLevels[currentLevel+1]=true;currentLevel++;
-  // Update level select buttons
-  document.querySelectorAll('.level-btn').forEach(btn=>{const lv=parseInt(btn.dataset.level);if(unlockedLevels[lv]){btn.classList.remove('locked')}else{btn.innerHTML=`<span class="level-num">${lv+1}</span><div><div style="color:#f0c;font-weight:bold">Lv.${lv+1} 解鎖中...</div></div>`}});
+  // Restore level select buttons
+  document.querySelectorAll('.level-btn').forEach(btn=>{const lv=parseInt(btn.dataset.level);if(unlockedLevels[lv]){btn.classList.remove('locked');btn.innerHTML=`<span class="level-num">${lv+1}</span><div><div style="color:#0ff;font-weight:bold">Lv.${lv+1} ${levels[lv].name}</div><div style="font-size:13px;color:#888;margin-top:4px">已解鎖</div></div>`}});
   if(currentLevel>=3){document.getElementById('victory-text').innerHTML='🎊 恭喜通關全部關卡！<br>電光戰姬已拯救世界！<br><br>返回主選單重新挑戰？';document.getElementById('btn-next-level').style.display='none'}else{document.getElementById('btn-next-level').style.display='';document.getElementById('victory-text').innerHTML=`🏆 ${levels[currentLevel-1].name} 通關！<br>獲得能量 +50<br><br>準備好挑戰下一關了嗎？`};showScreen('victory-screen')}
 
 function showGameOver(){gameState='gameover';music.stop();document.getElementById('hud-top').style.display='none';
-  document.getElementById('boss-hud').style.display='none';showScreen('gameover-screen')}
+  document.getElementById('boss-hud').style.display='none';document.getElementById('joystick-zone').style.display='none';document.getElementById('action-zone').style.display='none';showScreen('gameover-screen')}
 
 // Start game loop
 gameLoop();
