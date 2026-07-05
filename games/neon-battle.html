@@ -50,25 +50,6 @@ canvas{display:block;width:100%;height:100%}
 <body>
 <canvas id="game"></canvas>
 
-<div id="ui-overlay">
-  <div id="hud-top">
-    <div class="hp-wrap"><span style="color:#ff60a0;font-size:12px">HP</span><div class="hp-bar"><div class="hp-fill" id="hp-fill"></div></div><span id="hp-text" style="font-size:11px;min-width:50px">100/100</span></div>
-    <div class="hp-wrap"><span style="color:#a060ff;font-size:12px">ENERGY</span><div class="energy-bar"><div class="energy-fill" id="energy-fill"></div></div><span id="en-text" style="font-size:11px;min-width:45px">0/100</span></div>
-    <span id="level-indicator" style="color:#ffc800;font-weight:bold">Lv.1</span>
-  </div>
-
-  <div id="boss-hud"><div class="boss-name" id="boss-name"></div><div class="boss-hp-bar"><div class="boss-hp-fill" id="boss-hp-fill"></div></div></div>
-
-  <div id="joystick-zone"><div id="joystick-base"><div id="joystick-knob"></div></div></div>
-  <div id="action-zone">
-    <button class="action-btn" id="btn-attack">⚔️</button>
-    <button class="action-btn" id="btn-special">⚡</button>
-    <button class="action-btn disabled" id="btn-ultimate">💥</button>
-  </div>
-
-  <div id="screen-flash"></div>
-</div>
-
 <div id="title-screen" class="screen">
   <h1>電光戰姬</h1>
   <div class="subtitle">⚡ NEON BATTLE ⚡</div>
@@ -87,6 +68,25 @@ canvas{display:block;width:100%;height:100%}
 <div id="gameover-screen" class="screen" style="display:none"><h2 style="color:#ff3c64">GAME OVER</h2><p style="color:#888;margin-bottom:20px;text-align:center;padding:0 20px">你被擊敗了...<br>重新挑戰？</p><button class="menu-btn" id="btn-retry">重新開始</button><button class="menu-btn" id="btn-go-menu" style="font-size:14px;padding:8px 24px;color:#aaa;border-color:#555;margin-top:10px">返回主選單</button></div>
 
 <div id="victory-screen" class="screen" style="display:none"><h2>🎉 STAGE CLEAR! 🎉</h2><p id="victory-text"></p><button class="menu-btn" id="btn-next-level">下一關</button><button class="menu-btn" id="btn-v-menu" style="font-size:14px;padding:8px 24px;color:#aaa;border-color:#555;margin-top:10px">返回主選單</button></div>
+
+<div id="ui-overlay">
+  <div id="hud-top">
+    <div class="hp-wrap"><span style="color:#ff60a0;font-size:12px">HP</span><div class="hp-bar"><div class="hp-fill" id="hp-fill"></div></div><span id="hp-text" style="font-size:11px;min-width:50px">100/100</span></div>
+    <div class="hp-wrap"><span style="color:#a060ff;font-size:12px">ENERGY</span><div class="energy-bar"><div class="energy-fill" id="energy-fill"></div></div><span id="en-text" style="font-size:11px;min-width:45px">0/100</span></div>
+    <span id="level-indicator" style="color:#ffc800;font-weight:bold">Lv.1</span>
+  </div>
+
+  <div id="boss-hud"><div class="boss-name" id="boss-name"></div><div class="boss-hp-bar"><div class="boss-hp-fill" id="boss-hp-fill"></div></div></div>
+
+  <div id="joystick-zone"><div id="joystick-base"><div id="joystick-knob"></div></div></div>
+  <div id="action-zone">
+    <button class="action-btn" id="btn-attack">⚔️</button>
+    <button class="action-btn" id="btn-special">⚡</button>
+    <button class="action-btn disabled" id="btn-ultimate">💥</button>
+  </div>
+
+  <div id="screen-flash"></div>
+</div>
 
 <button id="mute-btn">🔊</button>
 <script>
