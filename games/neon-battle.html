@@ -223,7 +223,7 @@ function spawnBoss(){const lv=levels[currentLevel];bossSpawned=true;
 // ===== INPUT (Touch + Keyboard) =====
 const keys={};let touchMoveX=0,touchAttacking=false;
 
-document.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space')touchAttacking=true});
+document.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Space'){e.preventDefault();doAttack()}});
 document.addEventListener('keyup',e=>{keys[e.code]=false});
 
 // Joystick
@@ -254,12 +254,21 @@ let _actionTS=null;
 function bindActionButtons(){
   const a=document.getElementById('action-zone');if(!a)return;
   if(_actionTS)document.removeEventListener('touchstart',_actionTS);
-  _actionTS=e=>{const t=e.target;if(t.id==='btn-attack'||t.closest('#btn-attack')){e.preventDefault();touchAttacking=true}else if(t.id==='btn-special'||t.closest('#btn-special')){e.preventDefault();doSpecial()}else if((t.id==='btn-ultimate'||t.closest('#btn-ultimate'))&&!player.ultimateCooldown){e.preventDefault();doUltimate()}};
+  _actionTS=e=>{const t=e.target;if(t.id==='btn-attack'||t.closest('#btn-attack')){e.preventDefault();doAttack()}else if(t.id==='btn-special'||t.closest('#btn-special')){e.preventDefault();doSpecial()}else if((t.id==='btn-ultimate'||t.closest('#btn-ultimate'))&&!player.ultimateCooldown){e.preventDefault();doUltimate()}};
   document.addEventListener('touchstart',_actionTS,{passive:false})}
 function unbindActionButtons(){if(_actionTS)document.removeEventListener('touchstart',_actionTS);_actionTS=null}
 
-function updateKnob(touch){let dx=(touch.clientX-joyCenterX)/45;dx=Math.max(-1,Math.min(1,dx));
-  touchMoveX=dx;joyKnob.style.transform=`translate(${dx*35}px,0)`}
+function updateKnob(touch){
+  let dx=(touch.clientX-joyCenterX)/45;dx=Math.max(-1,Math.min(1,dx));
+  touchMoveX=dx;
+  // Y-axis for jump (up) and dash (down)
+  let dy=(touch.clientY-joyCenterY)/45;dy=Math.max(-1,Math.min(1,dy));
+  joyKnob.style.transform=`translate(${dx*35}px,${dy*35}px)`;
+  // Up swipe → jump
+  if(dy<-0.6&&player.onGround){player.vy=-13;player.onGround=false}
+  // Down swipe → dash (air dash)
+  if(dy>0.6&&!player.isDashing&&player.dashCooldown<=0){player.isDashing=true;player.dashTimer=8;player.dashCooldown=60;player.invincible=Math.max(player.invincible,15)}
+}
 
 // Game control buttons — attached via bindActionButtons during gameplay only
 
@@ -348,7 +357,7 @@ function update(){if(gameState!=='playing')return;
     // Damage player on contact
     if(player.invincible<=0&&rectOverlap(player,e)){player.hp-=e.damage;player.invincible=45;screenShakeTimer=8;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);
       // Knockback
-      player.vx=(player.x<e.x?1:-1)*8;player.vy=-6;if(player.hp<=0){gameState='gameover';playSFX('gameover')}
+      player.vx=(player.x<e.x?1:-1)*8;player.vy=-6;if(player.hp<=0){playSFX('gameover');showGameOver()}
     }
     // Remove off-screen enemies
     if(e.y>H+200||e.x<-200||e.x>WORLD_W+200){e.dead=true}})
@@ -358,12 +367,12 @@ function update(){if(gameState!=='playing')return;
   // Update projectiles
   projectiles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;
     if(p.isPlayer){enemies.forEach(e=>{if(rectOverlap(p,e)){damageEnemy(e,p.damage);p.life=0}});if(boss&&!boss.dead&&rectOverlap(p,boss)){damageBoss(p.damage);p.life=0}
-    }else{if(rectOverlap(p,player)&&player.invincible<=0){player.hp-=p.damage;player.invincible=30;screenShakeTimer=6;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);p.life=0;if(player.hp<=0)gameState='gameover'}}});
+    }else{if(rectOverlap(p,player)&&player.invincible<=0){player.hp-=p.damage;player.invincible=30;screenShakeTimer=6;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);p.life=0;if(player.hp<=0){playSFX('gameover');showGameOver()}}}});
   // Boss projectiles are added to main array above
   projectiles=projectiles.filter(p=>p.life>0&&!p.dead);
 
   // Player bottom bounds - fall damage / death
-  if(player.y>H+200){player.hp-=50;player.invincible=45;if(player.hp<=0)gameState='gameover';else{player.x=Math.max(100,cameraX+50);player.y=H*.3;player.vy=-8}}
+  if(player.y>H+200){player.hp-=50;player.invincible=45;if(player.hp<=0){playSFX('gameover');showGameOver()}else{player.x=Math.max(100,cameraX+50);player.y=H*.3;player.vy=-8}}
 
   // Boss logic
   if(boss&&!boss.dead){updateBoss()}
