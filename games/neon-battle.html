@@ -34,17 +34,17 @@ canvas{display:block;width:100%;height:100%}
 .screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:30;background:rgba(5,5,18,.97)}
 #title-screen h1{font-size:min(8vw,42px);color:#0ff;text-shadow:0 0 30px #0ff,0 0 60px #06f;margin-bottom:8px;animation:pulse-glow 2s ease-in-out infinite}
 #title-screen .subtitle{font-size:min(4vw,16px);color:#f0c;text-shadow:0 0 15px #f0c;margin-bottom:40px}
-.menu-btn{padding:14px 48px;font-size:min(5vw,18px);background:transparent;color:#0ff;border:2px solid #0ff;box-shadow:0 0 20px rgba(0,255,255,.3),inset 0 0 20px rgba(0,255,255,.1);border-radius:8px;font-family:inherit;cursor:pointer;margin:6px;transition:all .2s}
+.menu-btn{padding:14px 48px;font-size:min(5vw,18px);background:transparent;color:#0ff;border:2px solid #0ff;box-shadow:0 0 20px rgba(0,255,255,.3),inset 0 0 20px rgba(0,255,255,.1);border-radius:8px;font-family:inherit;cursor:pointer;margin:6px;transition:all .2s;touch-action:manipulation}
 .menu-btn:hover,.menu-btn:active{background:rgba(0,255,255,.15);box-shadow:0 0 40px rgba(0,255,255,.5)}
 #level-select h2{color:#f0c;text-shadow:0 0 20px #f0c;margin-bottom:30px;font-size:min(6vw,28px)}
-.level-btn{padding:16px 40px;font-size:min(5vw,17px);background:transparent;color:#fff;border:2px solid rgba(255,255,255,.3);border-radius:8px;margin:8px;cursor:pointer;font-family:inherit;width:min(90vw,320px);text-align:left;display:flex;align-items:center;gap:16px}
+.level-btn{padding:16px 40px;font-size:min(5vw,17px);background:transparent;color:#fff;border:2px solid rgba(255,255,255,.3);border-radius:8px;margin:8px;cursor:pointer;font-family:inherit;width:min(90vw,320px);text-align:left;display:flex;align-items:center;gap:16px;touch-action:manipulation}
 .level-btn .level-num{font-size:2em;color:#0ff;text-shadow:0 0 15px #0ff;min-width:50px}
 .level-btn.locked{opacity:.4;cursor:not-allowed;border-color:#333;color:#888}
 #gameover-screen h2{font-size:min(7vw,36px);margin-bottom:20px;text-shadow:0 0 30px currentColor}
 #victory-screen h2{color:#ffc800;font-size:min(7vw,36px);text-shadow:0 0 30px #ffc800;margin-bottom:15px}
 #victory-screen p{color:#aaa;margin-bottom:30px;text-align:center;padding:0 20px;line-height:1.8;font-size:min(4vw,16px)}
 @keyframes pulse-glow{0%,100%{text-shadow:0 0 30px #0ff,0 0 60px #06f}50%{text-shadow:0 0 50px #0ff,0 0 100px #06f,0 0 140px #008}}
-#mute-btn{position:absolute;top:max(12px,env(safe-area-inset-top));right:min(12px,env(safe-area-inset-right));z-index:50;background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:8px}
+#mute-btn{position:absolute;top:max(12px,env(safe-area-inset-top));right:min(12px,env(safe-area-inset-right));z-index:50;background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:8px;touch-action:manipulation}
 </style>
 </head>
 <body>
@@ -236,31 +236,32 @@ function updateJoystickPos(){const r=joyZone.getBoundingClientRect();joyBase.sty
 updateJoystickPos();window.addEventListener('resize',()=>{setTimeout(updateJoystickPos,50)});
 
 // Joystick touch events — only active during gameplay
+let _joyTS=null,_joyTM=null,_joyTE=null;
 function bindJoystickTouch(){
-  joyZone.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];const r=joyBase.getBoundingClientRect();joyCenterX=r.left+r.width/2;joyCenterY=r.top+r.height/2;joyActive=true;updateKnob(t)},{passive:false});
-  joyZone.addEventListener('touchmove',e=>{if(joyActive){e.preventDefault();const t=e.touches[0];updateKnob(t)}},{passive:false});
-  document.addEventListener('touchend',()=>{joyActive=false;touchMoveX=0;joyKnob.style.transform='translate(0,0)'},{once:true})}
+  if(_joyTS){joyZone.removeEventListener('touchstart',_joyTS);document.removeEventListener('touchend',_joyTE)}
+  _joyTS=e=>{e.preventDefault();const t=e.touches[0];const r=joyBase.getBoundingClientRect();joyCenterX=r.left+r.width/2;joyCenterY=r.top+r.height/2;joyActive=true;updateKnob(t)};
+  _joyTM=e=>{if(joyActive){e.preventDefault();const t=e.touches[0];updateKnob(t)}};
+  _joyTE=()=>{joyActive=false;touchMoveX=0;joyKnob.style.transform='translate(0,0)'};
+  joyZone.addEventListener('touchstart',_joyTS,{passive:false});
+  joyZone.addEventListener('touchmove',_joyTM,{passive:false});
+  document.addEventListener('touchend',_joyTE)}
+function unbindJoystickTouch(){
+  if(_joyTS){joyZone.removeEventListener('touchstart',_joyTS);document.removeEventListener('touchend',_joyTE);_joyTS=null;_joyTM=null;_joyTE=null}
+}
 
 // Action buttons — only active during gameplay
+let _actionTS=null;
 function bindActionButtons(){
-  const a=document.getElementById('action-zone');
-  if(!a)return;
-  document.addEventListener('touchstart',e=>{
-    const t=e.target;
-    if(t.id==='btn-attack'||t.closest('#btn-attack')){e.preventDefault();touchAttacking=true}
-    else if(t.id==='btn-special'||t.closest('#btn-special')){e.preventDefault();doSpecial()}
-    else if((t.id==='btn-ultimate'||t.closest('#btn-ultimate'))&&!player.ultimateCooldown){e.preventDefault();doUltimate()}
-  },{passive:false})}
-
-function unbindGameControls(){joyZone.removeEventListener('touchstart',arguments.callee);document.removeEventListener('touchend',arguments.callee)}
+  const a=document.getElementById('action-zone');if(!a)return;
+  if(_actionTS)document.removeEventListener('touchstart',_actionTS);
+  _actionTS=e=>{const t=e.target;if(t.id==='btn-attack'||t.closest('#btn-attack')){e.preventDefault();touchAttacking=true}else if(t.id==='btn-special'||t.closest('#btn-special')){e.preventDefault();doSpecial()}else if((t.id==='btn-ultimate'||t.closest('#btn-ultimate'))&&!player.ultimateCooldown){e.preventDefault();doUltimate()}};
+  document.addEventListener('touchstart',_actionTS,{passive:false})}
+function unbindActionButtons(){if(_actionTS)document.removeEventListener('touchstart',_actionTS);_actionTS=null}
 
 function updateKnob(touch){let dx=(touch.clientX-joyCenterX)/45;dx=Math.max(-1,Math.min(1,dx));
   touchMoveX=dx;joyKnob.style.transform=`translate(${dx*35}px,0)`}
 
-// Buttons
-document.getElementById('btn-attack').addEventListener('touchstart',e=>{e.preventDefault();touchAttacking=true},{passive:false});
-document.getElementById('btn-special').addEventListener('touchstart',e=>{e.preventDefault();doSpecial()},{passive:false});
-document.getElementById('btn-ultimate').addEventListener('touchstart',e=>{e.preventDefault();if(!player.ultimateCooldown)doUltimate()},{passive:false});
+// Game control buttons — attached via bindActionButtons during gameplay only
 
 // ===== ACTIONS =====
 function doAttack(){if(player.attackCooldown>0)return;player.attackCooldown=15;player.combo=Math.min(3,player.combo+1);
@@ -348,8 +349,9 @@ function update(){if(gameState!=='playing')return;
     if(player.invincible<=0&&rectOverlap(player,e)){player.hp-=e.damage;player.invincible=45;screenShakeTimer=8;spawnParticles(player.x+player.w/2,player.y+player.h/2,8,'#ff3c64',5,.3);
       // Knockback
       player.vx=(player.x<e.x?1:-1)*8;player.vy=-6;if(player.hp<=0){gameState='gameover';playSFX('gameover')}
+    }
     // Remove off-screen enemies
-    if(e.y>H+200||e.x<-200||e.x>WORLD_W+200){e.dead=true})
+    if(e.y>H+200||e.x<-200||e.x>WORLD_W+200){e.dead=true}})
 
   enemies=enemies.filter(e=>!e.dead);
 
@@ -573,28 +575,67 @@ function gameLoop(){update();render();requestAnimationFrame(gameLoop)}
 function showScreen(id){['title-screen','level-select','gameover-screen','victory-screen'].forEach(s=>document.getElementById(s).style.display='none');if(id)document.getElementById(id).style.display='flex'}
 
 // Universal click handler — works on ALL buttons (touch + desktop)
-document.addEventListener('click',function(e){
-  // Title: Start game
-  if(e.target.id==='btn-start'||e.target.closest('#btn-start')){initAudio();showScreen('level-select');return}
-  // Music toggle
-  if(e.target.id==='btn-music-toggle'||e.target.closest('#btn-music-toggle')||e.target.id==='mute-btn'||e.target.closest('#mute-btn')){
-    musicEnabled=!musicEnabled;
-    document.getElementById('mute-btn').textContent=musicEnabled?'🔊':'🔇';
-    const mt=document.getElementById('btn-music-toggle');if(mt)mt.textContent=musicEnabled?'🔊 BGM: ON':'🔇 BGM: OFF';
-    return}
-  // Level select buttons
-  if(e.target.classList.contains('level-btn')||e.target.closest('.level-btn')){
-    const btn=e.target.closest('.level-btn');const lv=parseInt(btn.dataset.level);
-    if(!unlockedLevels[lv])return;initAudio();startLevel(lv);return}
-  // Back menu
-  if(e.target.id==='btn-back-menu'||e.target.closest('#btn-back-menu')){showScreen('title-screen');return}
-  // Game over: retry / back
-  if(e.target.id==='btn-retry'||e.target.closest('#btn-retry')){startLevel(currentLevel);return}
-  if(e.target.id==='btn-go-menu'||e.target.closest('#btn-go-menu')){showScreen('title-screen');return}
-  // Victory: next level / menu
-  if(e.target.id==='btn-next-level'||e.target.closest('#btn-next-level')){if(currentLevel+1<3){currentLevel++;startLevel(currentLevel)}else showScreen('level-select');return}
-  if(e.target.id==='btn-v-menu'||e.target.closest('#btn-v-menu')){showScreen('title-screen');return}
-},{passive:true});
+// ===== UI 事件直接綁定優化版（繞過 iOS Safari 冒泡問題） =====
+function bindUIEvents() {
+  const bindBtn = (id, callback) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      callback(e);
+    });
+  };
+
+  // 1. 開始遊戲
+  bindBtn('btn-start', () => {
+    initAudio();
+    showScreen('level-select');
+  });
+
+  // 2. 音效切換開關（共用邏輯）
+  const toggleMusic = () => {
+    musicEnabled = !musicEnabled;
+    const muteBtn = document.getElementById('mute-btn');
+    const menuMuteBtn = document.getElementById('btn-music-toggle');
+    if (muteBtn) muteBtn.textContent = musicEnabled ? '🔊' : '🔇';
+    if (menuMuteBtn) menuMuteBtn.textContent = musicEnabled ? '🔊 BGM: ON' : '🔇 BGM: OFF';
+  };
+  bindBtn('btn-music-toggle', toggleMusic);
+  bindBtn('mute-btn', toggleMusic);
+
+  // 3. 關卡選擇按鈕（多個）
+  document.querySelectorAll('.level-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetBtn = e.target.closest('.level-btn');
+      const lv = parseInt(targetBtn.dataset.level);
+      if (!unlockedLevels[lv]) return;
+      initAudio();
+      startLevel(lv);
+    });
+  });
+
+  // 4. 返回主選單按鈕（不同畫面）
+  bindBtn('btn-back-menu', () => showScreen('title-screen'));
+  bindBtn('btn-go-menu', () => showScreen('title-screen'));
+  bindBtn('btn-v-menu', () => showScreen('title-screen'));
+
+  // 5. 遊戲結束：重新開始
+  bindBtn('btn-retry', () => startLevel(currentLevel));
+
+  // 6. 勝利畫面：下一關
+  bindBtn('btn-next-level', () => {
+    if (currentLevel + 1 < 3) {
+      currentLevel++;
+      startLevel(currentLevel);
+    } else {
+      showScreen('level-select');
+    }
+  });
+}
+
+// 執行 UI 事件綁定
+bindUIEvents();
 
 function startLevel(lv){currentLevel=lv;gameState='playing';boss=null;bossSpawned=false;enemies=[];projectiles=[];particles=[];floatingTexts=[];screenShakeTimer=0;flashAlpha=0;
   player.x=100;player.y=H*.3;player.vx=0;player.vy=-5;player.hp=player.maxHp;player.energy=Math.min(30,player.maxEnergy);player.invincible=60;player.attackCooldown=0;player.dashCooldown=0;player.specialCooldown=0;player.ultimateCooldown=0;player.combo=0;player.isDashing=false;
@@ -603,6 +644,7 @@ function startLevel(lv){currentLevel=lv;gameState='playing';boss=null;bossSpawne
   document.getElementById('boss-hud').style.display='flex';
   document.getElementById('joystick-zone').style.display='block';
   document.getElementById('action-zone').style.display='block';
+  bindJoystickTouch();bindActionButtons();
   music.start(lv);showScreen(null)}
 
 function showVictory(){gameState='victory';music.stop();playSFX('victory');unlockedLevels[currentLevel+1]=true;currentLevel++;
@@ -610,7 +652,8 @@ function showVictory(){gameState='victory';music.stop();playSFX('victory');unloc
   document.querySelectorAll('.level-btn').forEach(btn=>{const lv=parseInt(btn.dataset.level);if(unlockedLevels[lv]){btn.classList.remove('locked');btn.innerHTML=`<span class="level-num">${lv+1}</span><div><div style="color:#0ff;font-weight:bold">Lv.${lv+1} ${levels[lv].name}</div><div style="font-size:13px;color:#888;margin-top:4px">已解鎖</div></div>`}});
   if(currentLevel>=3){document.getElementById('victory-text').innerHTML='🎊 恭喜通關全部關卡！<br>電光戰姬已拯救世界！<br><br>返回主選單重新挑戰？';document.getElementById('btn-next-level').style.display='none'}else{document.getElementById('btn-next-level').style.display='';document.getElementById('victory-text').innerHTML=`🏆 ${levels[currentLevel-1].name} 通關！<br>獲得能量 +50<br><br>準備好挑戰下一關了嗎？`};showScreen('victory-screen')}
 
-function showGameOver(){gameState='gameover';music.stop();document.getElementById('hud-top').style.display='none';
+function showGameOver(){gameState='gameover';music.stop();unbindJoystickTouch();unbindActionButtons();
+  document.getElementById('hud-top').style.display='none';
   document.getElementById('boss-hud').style.display='none';document.getElementById('joystick-zone').style.display='none';document.getElementById('action-zone').style.display='none';showScreen('gameover-screen')}
 
 // Start game loop
