@@ -6,7 +6,7 @@
 <title>電光戰姬 — Neon Battle</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#0a0a12;font-family:'Courier New',monospace;color:#fff;-webkit-user-select:none;user-select:none;touch-action:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a12;font-family:'Courier New',monospace;color:#fff;-webkit-user-select:none;user-select:none;}
 canvas{display:block;width:100%;height:100%}
 #ui-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
 #hud-top{position:absolute;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:24px;align-items:center;padding:6px 16px;background:rgba(0,0,0,.6);border-radius:20px;border:1px solid rgba(0,240,255,.3);font-size:13px;color:#0ff;text-shadow:0 0 8px #0ff;display:none;z-index:11}
@@ -31,7 +31,7 @@ canvas{display:block;width:100%;height:100%}
 #btn-ultimate.disabled{opacity:.3;color:#666;border-color:#444;box-shadow:none}
 #screen-flash{position:absolute;top:0;left:0;width:100%;height:100%;background:white;opacity:0;pointer-events:none;z-index:20;transition:opacity .15s}
 /* Screens */
-.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:30;background:rgba(5,5,18,.97);pointer-events:auto}
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:30;background:rgba(5,5,18,.97)}
 #title-screen h1{font-size:min(8vw,42px);color:#0ff;text-shadow:0 0 30px #0ff,0 0 60px #06f;margin-bottom:8px;animation:pulse-glow 2s ease-in-out infinite}
 #title-screen .subtitle{font-size:min(4vw,16px);color:#f0c;text-shadow:0 0 15px #f0c;margin-bottom:40px}
 .menu-btn{padding:14px 48px;font-size:min(5vw,18px);background:transparent;color:#0ff;border:2px solid #0ff;box-shadow:0 0 20px rgba(0,255,255,.3),inset 0 0 20px rgba(0,255,255,.1);border-radius:8px;font-family:inherit;cursor:pointer;margin:6px;transition:all .2s}
@@ -235,9 +235,24 @@ let joyActive=false,joyCenterX=0,joyCenterY=0;
 function updateJoystickPos(){const r=joyZone.getBoundingClientRect();joyBase.style.left='20px';joyBase.style.top='calc(30% + env(safe-area-inset-top))';}
 updateJoystickPos();window.addEventListener('resize',()=>{setTimeout(updateJoystickPos,50)});
 
-joyZone.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];const r=joyBase.getBoundingClientRect();joyCenterX=r.left+r.width/2;joyCenterY=r.top+r.height/2;joyActive=true;updateKnob(t)},{passive:false});
-joyZone.addEventListener('touchmove',e=>{e.preventDefault();if(joyActive){const t=e.touches[0];updateKnob(t)}},{passive:false});
-document.addEventListener('touchend',()=>{joyActive=false;touchMoveX=0;joyKnob.style.transform='translate(0,0)'},{once:true});
+// Joystick touch events — only active during gameplay
+function bindJoystickTouch(){
+  joyZone.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];const r=joyBase.getBoundingClientRect();joyCenterX=r.left+r.width/2;joyCenterY=r.top+r.height/2;joyActive=true;updateKnob(t)},{passive:false});
+  joyZone.addEventListener('touchmove',e=>{if(joyActive){e.preventDefault();const t=e.touches[0];updateKnob(t)}},{passive:false});
+  document.addEventListener('touchend',()=>{joyActive=false;touchMoveX=0;joyKnob.style.transform='translate(0,0)'},{once:true})}
+
+// Action buttons — only active during gameplay
+function bindActionButtons(){
+  const a=document.getElementById('action-zone');
+  if(!a)return;
+  document.addEventListener('touchstart',e=>{
+    const t=e.target;
+    if(t.id==='btn-attack'||t.closest('#btn-attack')){e.preventDefault();touchAttacking=true}
+    else if(t.id==='btn-special'||t.closest('#btn-special')){e.preventDefault();doSpecial()}
+    else if((t.id==='btn-ultimate'||t.closest('#btn-ultimate'))&&!player.ultimateCooldown){e.preventDefault();doUltimate()}
+  },{passive:false})}
+
+function unbindGameControls(){joyZone.removeEventListener('touchstart',arguments.callee);document.removeEventListener('touchend',arguments.callee)}
 
 function updateKnob(touch){let dx=(touch.clientX-joyCenterX)/45;dx=Math.max(-1,Math.min(1,dx));
   touchMoveX=dx;joyKnob.style.transform=`translate(${dx*35}px,0)`}
@@ -557,15 +572,29 @@ function gameLoop(){update();render();requestAnimationFrame(gameLoop)}
 // ===== UI MANAGEMENT =====
 function showScreen(id){['title-screen','level-select','gameover-screen','victory-screen'].forEach(s=>document.getElementById(s).style.display='none');if(id)document.getElementById(id).style.display='flex'}
 
-document.getElementById('btn-start').addEventListener('click',()=>{initAudio();showScreen('level-select')});
-document.getElementById('btn-music-toggle').addEventListener('click',()=>{musicEnabled=!musicEnabled;document.getElementById('mute-btn').textContent=musicEnabled?'🔊':'🔇';document.getElementById('btn-music-toggle').textContent=musicEnabled?'🔊 BGM: ON':'🔇 BGM: OFF'});
-document.getElementById('mute-btn').addEventListener('click',()=>{musicEnabled=!musicEnabled;document.getElementById('mute-btn').textContent=musicEnabled?'🔊':'🔇';document.getElementById('btn-music-toggle').textContent=musicEnabled?'🔊 BGM: ON':'🔇 BGM: OFF'});
-
-document.querySelectorAll('.level-btn').forEach(btn=>{btn.addEventListener('click',()=>{const lv=parseInt(btn.dataset.level);if(!unlockedLevels[lv])return;initAudio();startLevel(lv)})});
-document.getElementById('btn-back-menu').addEventListener('click',()=>showScreen('title-screen'));
-document.getElementById('btn-retry').addEventListener('click',()=>startLevel(currentLevel));
-document.getElementById('btn-next-level').addEventListener('click',()=>{if(currentLevel+1<3){currentLevel++;startLevel(currentLevel)}else showScreen('level-select')});
-document.getElementById('btn-v-menu').addEventListener('click',()=>showScreen('title-screen'));
+// Universal click handler — works on ALL buttons (touch + desktop)
+document.addEventListener('click',function(e){
+  // Title: Start game
+  if(e.target.id==='btn-start'||e.target.closest('#btn-start')){initAudio();showScreen('level-select');return}
+  // Music toggle
+  if(e.target.id==='btn-music-toggle'||e.target.closest('#btn-music-toggle')||e.target.id==='mute-btn'||e.target.closest('#mute-btn')){
+    musicEnabled=!musicEnabled;
+    document.getElementById('mute-btn').textContent=musicEnabled?'🔊':'🔇';
+    const mt=document.getElementById('btn-music-toggle');if(mt)mt.textContent=musicEnabled?'🔊 BGM: ON':'🔇 BGM: OFF';
+    return}
+  // Level select buttons
+  if(e.target.classList.contains('level-btn')||e.target.closest('.level-btn')){
+    const btn=e.target.closest('.level-btn');const lv=parseInt(btn.dataset.level);
+    if(!unlockedLevels[lv])return;initAudio();startLevel(lv);return}
+  // Back menu
+  if(e.target.id==='btn-back-menu'||e.target.closest('#btn-back-menu')){showScreen('title-screen');return}
+  // Game over: retry / back
+  if(e.target.id==='btn-retry'||e.target.closest('#btn-retry')){startLevel(currentLevel);return}
+  if(e.target.id==='btn-go-menu'||e.target.closest('#btn-go-menu')){showScreen('title-screen');return}
+  // Victory: next level / menu
+  if(e.target.id==='btn-next-level'||e.target.closest('#btn-next-level')){if(currentLevel+1<3){currentLevel++;startLevel(currentLevel)}else showScreen('level-select');return}
+  if(e.target.id==='btn-v-menu'||e.target.closest('#btn-v-menu')){showScreen('title-screen');return}
+},{passive:true});
 
 function startLevel(lv){currentLevel=lv;gameState='playing';boss=null;bossSpawned=false;enemies=[];projectiles=[];particles=[];floatingTexts=[];screenShakeTimer=0;flashAlpha=0;
   player.x=100;player.y=H*.3;player.vx=0;player.vy=-5;player.hp=player.maxHp;player.energy=Math.min(30,player.maxEnergy);player.invincible=60;player.attackCooldown=0;player.dashCooldown=0;player.specialCooldown=0;player.ultimateCooldown=0;player.combo=0;player.isDashing=false;
