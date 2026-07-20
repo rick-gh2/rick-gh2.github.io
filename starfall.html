@@ -318,29 +318,26 @@ function drawPowerups(){powerups.forEach(p=>{const gl=Math.sin(p.pulse)*0.3+0.7;
     else{ctx.shadowBlur=20;ctx.shadowColor='#f0f';ctx.fillStyle=`rgba(255,0,255,${gl})`;ctx.beginPath();for(let i=0;i<6;i++){const a=(Math.PI/3)*i-0.524;if(i===0)ctx.moveTo(Math.cos(a)*p.size,Math.sin(a)*p.size);else ctx.lineTo(Math.cos(a)*p.size,Math.sin(a)*p.size);}ctx.closePath();ctx.fill();}
     ctx.restore();});}
 
-// --- Collision Detection (FIXED v3.0) ---
+// --- Collision Detection (FIXED v5.1) ---
 function checkCollisions(){
-    // Player bullets vs enemies — FIX: use per-enemy tracking to avoid double-kill bugs
-    const hitEnemies = new Set();
+    // Player bullets vs enemies — direct AABB, no double-splice bugs
     for(let i=bullets.length-1;i>=0;i--){
         const b=bullets[i]; if(b.isEnemy)continue;
-        let bulletHit=false;
         for(let j=enemies.length-1;j>=0;j--){
             const e=enemies[j];
-            // AABB collision: check overlap properly
-            if(Math.abs(b.x-e.x)<(e.w/2+b.w/2)&&Math.abs(b.y-e.y)<(e.h/2+b.h/2)){
+            const ox=Math.min(b.x+b.w/2,e.x+e.w/2)-Math.max(b.x-b.w/2,e.x-e.w/2);
+            const oy=Math.min(b.y+b.h/2,e.y+e.h/2)-Math.max(b.y-b.h/2,e.y-e.h/2);
+            if(ox>0&&oy>0){
                 e.hp-=b.damage;
                 bullets.splice(i,1);
-                bulletHit=true;
                 spawnParticles(b.x,b.y,'#fff',3,3);playSFX('hit');
-                if(e.hp<=0&&!hitEnemies.has(j)){
-                    hitEnemies.add(j);
+                if(e.hp<=0){
                     score+=e.score;combo++;comboTimer=2;enemiesKilledInWave++;
                     spawnParticles(e.x,e.y,e.color,15,5);screenShake.intensity=e.type==='boss'?10:4;playSFX('explosion');
-                    if(e.type!=='boss'){spawnPowerup(e.x,e.y);enemies.splice(j,1);}
-                    else{for(let k=0;k<3;k++)spawnPowerup(e.x+(k-1)*20,e.y);enemies.splice(j,1);}
+                    if(e.type!=='boss'){spawnPowerup(e.x,e.y);}
+                    else{for(let k=0;k<3;k++)spawnPowerup(e.x+(k-1)*20,e.y);}
                 }
-                break; // bullet consumed, stop checking more enemies
+                break; // bullet consumed
             }
         }
     }
@@ -379,7 +376,6 @@ function checkCollisions(){
         }
     }
 
-    enemies=enemies.filter(e=>e.hp>0||e.type==='boss');
 }
 
 function showPowerupNotify(t){const el=document.getElementById('powerup-notify');el.textContent=t;el.style.opacity=1;setTimeout(()=>{el.style.opacity=0;},1500);}
@@ -389,7 +385,7 @@ let enemiesKilledInWave=0, waveTransitionTimer=0;
 const maxEnemiesPerWave=[8,12,16,20,30];
 
 function updateWaves(dt){
-    if(waveTransitionTimer>0){waveTransitionTimer-=dt;if(waveTransitionTimer<=0)enemiesKilledInWave=0;return;}
+    if(waveTransitionTimer>0){waveTransitionTimer-=dt;return;} // Don't reset kill counter during transition!
     const ds=diffSettings[difficulty];
     const maxE=Math.min(maxEnemiesPerWave[Math.min(wave-1,maxEnemiesPerWave.length-1)],40);
 
