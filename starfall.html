@@ -48,6 +48,7 @@
         #boss-warning { position: fixed; top: 40%; left: 50%; transform: translate(-50%,-50%); font-size: clamp(20px, 5vw, 36px); color: #f00; text-shadow: 0 0 30px rgba(255,0,0,0.8); pointer-events: none; opacity: 0; z-index: 50; animation: boss-flash 0.5s ease-in-out infinite alternate; }
         @keyframes boss-flash { from{opacity:0.3} to{opacity:1} }
         #combo-display { position: fixed; top: clamp(48px, 7vh, 70px); right: 25px; font-size: clamp(14px, 3vw, 18px); color: #ff0; text-shadow: 0 0 10px currentColor; opacity: 0; transition: opacity 0.3s; }
+        #boss-hp-display { position: fixed; bottom: clamp(70px, 12vh, 25px); left: 50%; transform: translateX(-50%); font-size: clamp(10px, 2vw, 13px); color: #f44; text-shadow: 0 0 8px rgba(255,0,0,0.6); pointer-events: none; opacity: 0; z-index: 10; transition: opacity 0.3s; }
 
         /* Instructions */
         .instructions { margin-top: 25px; font-size: clamp(11px, 2.8vw, 13px); color: #666; text-align: center; line-height: 2; padding: 0 20px; }
@@ -56,7 +57,7 @@
         /* Navigation */
         .nav-link { position: fixed; bottom: clamp(70px, 10vh, 20px); left: 20px; z-index: 20; color: #666; text-decoration: none; font-size: 13px; }
 
-        /* Mobile Controls - separated layout */
+        /* Mobile Controls */
         #mobile-controls { display: none; position: fixed; bottom: 10px; left: 0; right: 0; z-index: 15; padding: 0 12px; }
         .mobile-btn-row { display: flex; justify-content: space-between; align-items: center; height: clamp(60px, 10vh, 80px); }
         .mobile-btn { width: clamp(50px, 13vw, 65px); height: clamp(50px, 13vw, 65px); border-radius: 50%; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); color: #fff; font-size: clamp(18px, 4vw, 24px); display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: none; transition: background 0.1s; }
@@ -80,13 +81,14 @@
 <div id="combo-display"></div>
 <div id="powerup-notify"></div>
 <div id="boss-warning">&#9888; BOSS APPROACHING &#9888;</div>
+<div id="boss-hp-display"></div>
 
 <button id="music-toggle" onclick="toggleMusic()">&#128265; BGM</button>
 
 <!-- Start Screen -->
 <div id="start-screen" class="overlay-screen">
     <h1 class="title">星際逃亡者</h1>
-    <p class="subtitle">STARFALL ESCAPE</p>
+    <p class="subtitle">STARFALL ESCAPE — v3.0 Day 2</p>
     <div class="diff-group">
         <button class="diff-btn selected" data-diff="easy" onclick="selectDiff(this)">😊 簡單</button>
         <button class="diff-btn" data-diff="normal" onclick="selectDiff(this)">😐 普通</button>
@@ -96,7 +98,8 @@
     <div class="instructions">
         <kbd>A</kbd><kbd>D</kbd> / <kbd>&larr;</kbd><kbd>&rarr;</kbd> 移動<br>
         <kbd>Space</kbd> 射擊 &nbsp;|&nbsp; <kbd>P</kbd> 暫停<br>
-        收集能量球升級武器 &#9889; 躲避流星 ☄️
+        收集能量球升級武器 &#9889; 躲避流星 ☄️<br>
+        <span style="color:#f44">⚠ 3 種 Boss 登場！每 3 wave 出現 Boss</span>
     </div>
 </div>
 
@@ -120,7 +123,9 @@
 
 <script>
 // ============================================================
-//  STARFALL ESCAPE v3.0 — Bug-fixed + Mobile-friendly
+//  STARFALL ESCAPE v3.0 Day 2 — New Enemies + Bosses
+//  - 4 new enemy types: Sinker(蛇行), Tank(高HP慢速), Healer(治療者), Sniper(狙擊手)
+//  - 3 boss variants: Starship(範圍砲擊), ShadowQueen(分身+隱形), Devastator(三階段變身)
 // ============================================================
 
 const canvas = document.getElementById('gameCanvas');
@@ -139,12 +144,12 @@ let score = 0, wave = 1, combo = 0, comboTimer = 0, lastTime = 0, animFrame = nu
 
 const player = { x:0, y:0, w:40, h:50, speed:6, hp:100, maxHp:100, weaponLevel:1, shootCooldown:0, invincible:0, trail:[] };
 
-// Difficulty settings
-let difficulty = 'easy'; // easy | normal | hard
+// Difficulty settings (Day 2 tuned)
+let difficulty = 'easy';
 const diffSettings = {
-    easy:   { enemySpeedMul: 0.7, enemyHPMul: 0.6, spawnRate: 0.6,  meteorFreq: 0.4, playerHp: 150, waveHeal: 30 },
-    normal: { enemySpeedMul: 1.0, enemyHPMul: 1.0, spawnRate: 1.0,  meteorFreq: 1.0, playerHp: 100, waveHeal: 20 },
-    hard:   { enemySpeedMul: 1.4, enemyHPMul: 1.5, spawnRate: 1.6,  meteorFreq: 1.8, playerHp: 70,  waveHeal: 10 }
+    easy:   { enemySpeedMul: 0.75, enemyHPMul: 0.65, spawnRate: 0.55, meteorFreq: 0.35, playerHp: 150, waveHeal: 35 },
+    normal: { enemySpeedMul: 1.0,  enemyHPMul: 1.0,  spawnRate: 1.0,  meteorFreq: 1.0,  playerHp: 100, waveHeal: 20 },
+    hard:   { enemySpeedMul: 1.5,  enemyHPMul: 1.6,  spawnRate: 1.7,  meteorFreq: 2.0,  playerHp: 65,  waveHeal: 8 }
 };
 
 let bullets=[], enemies=[], particles=[], powerups=[], meteors=[], stars=[];
@@ -157,12 +162,10 @@ let mobileLeft=false, mobileRight=false, mobileFireing=false;
 window.addEventListener('keydown', e => { keys[e.code]=true; if(e.code==='KeyP') togglePause(); });
 window.addEventListener('keyup', e => { keys[e.code]=false; });
 
-// Mobile touch controls (separate buttons to avoid overlap)
 (function(){
     const btnL = document.getElementById('btn-left');
     const btnR = document.getElementById('btn-right');
     const btnF = document.getElementById('btn-fire');
-
     function addTouch(el, onStart, onEnd){
         el.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); onStart(); }, {passive:false});
         el.addEventListener('touchend',   e => { e.preventDefault(); e.stopPropagation(); onEnd(); },  {passive:false});
@@ -171,8 +174,6 @@ window.addEventListener('keyup', e => { keys[e.code]=false; });
     addTouch(btnL, () => mobileLeft=true,     () => mobileLeft=false);
     addTouch(btnR, () => mobileRight=true,    () => mobileRight=false);
     addTouch(btnF, () => mobileFireing=true,   () => mobileFireing=false);
-
-    // Mouse fallback for desktop testing of mobile buttons
     btnL.addEventListener('mousedown', e=>{e.preventDefault();mobileLeft=true;});
     btnL.addEventListener('mouseup',  e=>{e.preventDefault();mobileLeft=false;});
     btnR.addEventListener('mousedown', e=>{e.preventDefault();mobileRight=true;});
@@ -187,7 +188,7 @@ function selectDiff(btn){
     difficulty = btn.dataset.diff;
 }
 
-// --- Audio Engine (Web Audio API BGM) ---
+// --- Audio Engine ---
 let audioCtx=null, musicPlaying=false, bgmNodes=[];
 let bossWarningTimeout=null;
 
@@ -235,7 +236,7 @@ function scheduleNotes(){
     setTimeout(scheduleNotes,4000);
 }
 
-// --- Sound Effects (work without BGM) ---
+// --- Sound Effects ---
 function playSFX(type){
     if(!audioCtx)return;const now=audioCtx.currentTime;
     switch(type){
@@ -245,6 +246,8 @@ function playSFX(type){
         case 'hit':{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';o.frequency.setValueAtTime(150,now);g.gain.setValueAtTime(0.12,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.15);o.connect(g).connect(audioCtx.destination);o.start(now);o.stop(now+0.2);break;}
         case 'enemyShoot':{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sawtooth';o.frequency.setValueAtTime(300,now);o.frequency.exponentialRampToValueAtTime(100,now+0.15);g.gain.setValueAtTime(0.06,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.2);o.connect(g).connect(audioCtx.destination);o.start(now);o.stop(now+0.25);break;}
         case 'meteor':{const bufLen=audioCtx.sampleRate*0.3,buf=audioCtx.createBuffer(1,bufLen,audioCtx.sampleRate),data=buf.getChannelData(0);for(let i=0;i<bufLen;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(bufLen*0.3));const src=audioCtx.createBufferSource(),filt=audioCtx.createBiquadFilter(),g=audioCtx.createGain();src.buffer=buf;filt.type='lowpass';filt.frequency.value=800;g.gain.setValueAtTime(0.1,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.3);src.connect(filt).connect(g).connect(audioCtx.destination);src.start();break;}
+        case 'boss':{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sawtooth';o.frequency.setValueAtTime(80,now);o.frequency.linearRampToValueAtTime(40,now+1.5);g.gain.setValueAtTime(0.2,now);g.gain.exponentialRampToValueAtTime(0.001,now+2);o.connect(g).connect(audioCtx.destination);o.start(now);o.stop(now+2.5);break;}
+        case 'heal':{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(600,now);o.frequency.linearRampToValueAtTime(900,now+0.3);g.gain.setValueAtTime(0.08,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.4);o.connect(g).connect(audioCtx.destination);o.start(now);o.stop(now+0.5);break;}
     }
 }
 
@@ -255,8 +258,9 @@ function drawStars(){stars.forEach(s=>{ctx.fillStyle=`rgba(255,255,255,${s.brigh
 
 // --- Particles ---
 function spawnParticles(x,y,color,count,speed){for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,sp=Math.random()*speed+1;particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1.0,decay:Math.random()*0.03+0.02,color,size:Math.random()*4+2});}}
+function spawnHealParticles(x,y){for(let i=0;i<5;i++){const a=Math.random()*Math.PI*2;particles.push({x:x+(Math.random()-0.5)*40,y,vx:Math.cos(a)*1,vy:-Math.random()*2-1,life:1.0,decay:0.02,color:'#0f0',size:3+Math.random()*3});}}
 function updateParticles(dt){particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;return p.life>0;});}
-function drawParticles(){particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.shadowBlur=10;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;ctx.shadowBlur=0;}
+function drawParticles(){particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.shadowBlur=8;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;ctx.shadowBlur=0;}
 
 // --- Player Drawing ---
 function drawPlayer(){
@@ -285,23 +289,438 @@ function shoot(){if(player.shootCooldown>0)return;const cx=player.x,cy=player.y-
 function updateBullets(dt){bullets=bullets.filter(b=>{b.x+=b.vx;b.y+=b.vy;return b.y>-20&&b.x>-10&&b.x<canvas.width+10;});}
 function drawBullets(){bullets.forEach(b=>{ctx.shadowBlur=15;ctx.shadowColor=b.color;const g=ctx.createLinearGradient(b.x,b.y-b.h/2,b.x,b.y+b.h/2);g.addColorStop(0,'#fff');g.addColorStop(0.5,b.color);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(b.x-b.w/2,b.y+b.h/2);ctx.lineTo(b.x,b.y-b.h/2);ctx.lineTo(b.x+b.w/2,b.y+b.h/2);ctx.closePath();ctx.fill();});ctx.shadowBlur=0;}
 
-// --- Enemies ---
-const enemyConfigs={drone:{w:28,h:28,hp:30,speed:2,color:'#f44',score:100,shootRate:0},fighter:{w:32,h:36,hp:50,speed:3,color:'#fa0',score:200,shootRate:0.02},bomber:{w:40,h:40,hp:80,speed:1.5,color:'#f0a',score:350,shootRate:0.03}};
+// ============================================================
+//  NEW ENEMY TYPES (Day 2)
+// ============================================================
 
-function spawnEnemy(){const types=['drone','fighter','bomber'];let type='drone';const r=Math.random();if(wave>=3&&r<0.15)type='bomber';else if(r<0.4)type='fighter';const cfg=enemyConfigs[type];enemies.push({x:Math.random()*(canvas.width-80)+40,y:-50,type,...cfg,maxHp:cfg.hp,shootTimer:0});}
-function spawnBoss(){enemies.push({x:canvas.width/2,y:-80,type:'boss',w:80,h:60,hp:300+wave*100,maxHp:300+wave*100,speed:1.5,color:'#f00',score:2000+wave*500,shootRate:0.08,shootTimer:0,phase:Math.random()*6.28,patternTimer:0});}
+// Base enemy configs — original + new types
+const enemyConfigs = {
+    drone:   { w:28, h:28, hp:30, speed:2.0, color:'#f44', score:100, shootRate:0 },
+    fighter: { w:32, h:36, hp:50, speed:3.0, color:'#fa0', score:200, shootRate:0.02 },
+    bomber:  { w:40, h:40, hp:80, speed:1.5, color:'#f0a', score:350, shootRate:0.03 },
 
-function updateEnemies(dt){enemies=enemies.filter(e=>{
-    if(e.type==='boss'){e.y+=Math.sin(Date.now()*0.001+e.phase)*0.5;if(e.y<80)e.y+=0.5;e.patternTimer+=dt;if(e.patternTimer>2){e.patternTimer=0;for(let i=-2;i<=2;i++)bullets.push({x:e.x+i*15,y:e.y+30,vx:i*1.5,vy:4,w:6,h:8,color:'#f44',damage:-20,isEnemy:true});}}
-    else{e.y+=e.speed*diffSettings[difficulty].enemySpeedMul;if(e.type==='fighter')e.x+=Math.sin(Date.now()*0.003+e.y*0.1)*2;}
-    if(e.shootRate>0){e.shootTimer+=dt;if(e.shootTimer>1/e.shootRate&&Math.random()<0.3){e.shootTimer=0;const a=Math.atan2(player.y-e.y,player.x-e.x);bullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(a)*4,vy:Math.sin(a)*4,w:5,h:8,color:'#f0f',damage:-15,isEnemy:true});}}
-    return e.y<canvas.height+60;
-});}
+    // Day 2新增敵人
+    sinker:  { w:26, h:24, hp:25, speed:3.5, color:'#88ff88', score:150, shootRate:0 },       // 蛇行飛行器 — 快速+Z字型
+    tank:    { w:44, h:44, hp:250, speed:0.8, color:'#aaaaff', score:500, shootRate:0.015 },   // 坦克 — 高HP慢速
+    healer:  { w:30, h:30, hp:60, speed:1.2, color:'#00ff88', score:400, shootRate:0, isHealer:true }, // 治療者 — 恢復鄰近敵人
+    sniper:  { w:32, h:34, hp:40, speed:1.5, color:'#ff66ff', score:350, shootRate:0.08 }     // 狙擊手 — 遠距精準射擊
+};
 
-function drawEnemies(){enemies.forEach(e=>{ctx.save();ctx.translate(e.x,e.y);
-    if(e.type==='boss'){ctx.shadowBlur=25;ctx.shadowColor='#f00';const g=ctx.createRadialGradient(0,0,10,0,0,40);g.addColorStop(0,'#fff');g.addColorStop(0.3,'#f44');g.addColorStop(1,'#600');ctx.fillStyle=g;ctx.beginPath();for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/2,r=e.w/2;if(i===0)ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);else ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fill();const hr=e.hp/e.maxHp;ctx.fillStyle='#300';ctx.fillRect(-40,-e.h/2-15,80,6);ctx.fillStyle=hr>0.3?'#f00':'#ff0';ctx.fillRect(-40,-e.h/2-15,80*hr,6);}
-    else{const glow=e.type==='bomber'?'#f0a':(e.type==='fighter'?'#fa0':'#f44');ctx.shadowBlur=15;ctx.shadowColor=glow;ctx.fillStyle=e.color;ctx.beginPath();if(e.type==='drone'){ctx.moveTo(0,-e.h/2);ctx.lineTo(e.w/2,0);ctx.lineTo(0,e.h/2);ctx.lineTo(-e.w/2,0);}else if(e.type==='fighter'){ctx.moveTo(0,-e.h/2);ctx.lineTo(e.w/2,e.h/3);ctx.lineTo(e.w/4,e.h/2);ctx.lineTo(-e.w/4,e.h/2);ctx.lineTo(-e.w/2,e.h/3);}else{ctx.arc(0,0,e.w/2,0,Math.PI*2);}ctx.closePath();ctx.fill();if(e.hp<e.maxHp){const hr=e.hp/e.maxHp;ctx.fillStyle='#300';ctx.fillRect(-15,-e.h/2-8,30,3);ctx.fillStyle=hr>0.5?'#0f0':(hr>0.25?'#ff0':'#f00');ctx.fillRect(-15,-e.h/2-8,30*hr,3);}}
-    ctx.restore();});}
+// --- Spawn Logic (updated for new types) ---
+function spawnEnemy(){
+    const ds=diffSettings[difficulty];
+    let type='drone';
+    const r=Math.random();
+
+    if(wave>=2 && r<0.1){type='sinker';}           // 蛇行 — Wave 2+ 出現
+    else if(wave>=4 && r<0.18){type='tank';}        // 坦克 — Wave 4+
+    else if(wave>=3 && r<0.25){type='healer';}      // 治療者 — Wave 3+
+    else if(wave>=5 && r<0.32){type='sniper';}      // 狙擊手 — Wave 5+
+    else if(r<0.4) type='fighter';
+
+    const cfg=enemyConfigs[type];
+    enemies.push({x:Math.random()*(canvas.width-80)+40, y:-50, type, ...cfg, maxHp:cfg.hp, shootTimer:0});
+}
+
+// --- Boss System (Day 2 — 3 variants) ---
+let activeBoss = null; // track current boss for HP display
+
+function spawnBoss(){
+    const variant = wave % 9 === 0 ? 'devastator' : wave % 9 <= 4 ? 'starship' : 'shadowqueen';
+    const w=canvas.width, h=canvas.height;
+
+    if(variant==='starship'){
+        // Boss-1: 星際巨艦 — 範圍砲擊
+        enemies.push({
+            x:w/2, y:-80, type:'boss', bossVariant:'starship', bossName:'星際巨艦',
+            w:90, h:70, hp:500+wave*120, maxHp:500+wave*120, speed:1.2, color:'#ff4444', score:3000+wave*600,
+            shootRate:0.06, shootTimer:0, phase:Math.random()*6.28, patternTimer:0,
+            attackPattern:'spread' // 範圍擴散砲擊
+        });
+    } else if(variant==='shadowqueen'){
+        // Boss-2: 暗影女王 — 分身+隱形
+        enemies.push({
+            x:w/2, y:-80, type:'boss', bossVariant:'shadowqueen', bossName:'暗影女王',
+            w:70, h:65, hp:400+wave*100, maxHp:400+wave*100, speed:1.0, color:'#aa44ff', score:3500+wave*700,
+            shootRate:0.04, shootTimer:0, phase:Math.random()*6.28, patternTimer:0,
+            attackPattern:'clone', // 分身攻擊
+            cloneCount:0, invisibleTimer:0, isHidden:false, lastCloneTime:0
+        });
+    } else {
+        // Boss-3: 終極毀滅者 — 三階段變身
+        enemies.push({
+            x:w/2, y:-80, type:'boss', bossVariant:'devastator', bossName:'終極毀滅者',
+            w:75, h:65, hp:600+wave*150, maxHp:600+wave*150, speed:1.3, color:'#ff8800', score:5000+wave*800,
+            shootRate:0.05, shootTimer:0, phase:Math.random()*6.28, patternTimer:0,
+            attackPattern:'phase1', // 三階段
+            currentPhase:1, // 1=初始, 2=狂暴, 3=毀滅形態
+            phaseTransitioned:false
+        });
+    }
+
+    activeBoss = enemies[enemies.length-1];
+}
+
+function updateEnemies(dt){
+    const ds=diffSettings[difficulty];
+    enemies=enemies.filter(e=>{
+        // --- BOSS LOGIC ---
+        if(e.type==='boss'){
+            // All bosses rise to position
+            e.y+=Math.sin(Date.now()*0.001+e.phase)*0.5;
+            if(e.y<80) e.y+=0.5;
+
+            e.patternTimer+=dt;
+
+            // Boss HP display
+            const hpEl=document.getElementById('boss-hp-display');
+            hpEl.textContent=`${e.bossName||'BOSS'}  HP: ${Math.ceil(e.hp)} / ${e.maxHp}`;
+            hpEl.style.opacity=1;
+            if(enemies.filter(x=>x.type==='boss').length===0) hpEl.style.opacity=0;
+
+            // --- Boss-1: Starship — Spread Barrage ---
+            if(e.bossVariant==='starship'){
+                // Phase change at 50% HP
+                const hpRatio=e.hp/e.maxHp;
+                if(hpRatio<0.5 && e.attackPattern!=='spread2') e.attackPattern='spread2';
+
+                // Spread fire pattern
+                if(e.patternTimer>1.5){
+                    e.patternTimer=0;
+                    const count = (e.attackPattern==='spread2'?7:5);
+                    const spreadAngle = 0.6;
+                    for(let i=0;i<count;i++){
+                        const angle=-spreadAngle/2+spreadAngle*i/(count-1);
+                        bullets.push({x:e.x,y:e.y+e.h/2,vx:Math.sin(angle)*5,vy:Math.cos(angle)*4,w:6,h:8,color:'#ff6600',damage:-20,isEnemy:true});
+                    }
+                }
+
+                // Heavy beam at 30% HP
+                if(hpRatio<0.3 && e.patternTimer>3){
+                    e.patternTimer=0;
+                    const a=Math.atan2(player.y-e.y,player.x-e.x);
+                    for(let i=-1;i<=1;i++){
+                        bullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(a+i*0.15)*7,vy:Math.sin(a+i*0.15)*7,w:8,h:10,color:'#ff0044',damage:-25,isEnemy:true});
+                    }
+                }
+            }
+
+            // --- Boss-2: Shadow Queen — Clone + Invisibility ---
+            else if(e.bossVariant==='shadowqueen'){
+                const hpRatio=e.hp/e.maxHp;
+                e.invisibleTimer+=dt;
+
+                // Invisibility cycle (every 8 seconds)
+                if(!e.isHidden && e.invisibleTimer>8){
+                    e.isHidden=true;
+                    spawnParticles(e.x,e.y,'#aa44ff',10,3);
+                } else if(e.isHidden && e.invisibleTimer>12){
+                    e.isHidden=false;
+                    e.invisibleTimer=0;
+                    // Reveal flash
+                    for(let i=0;i<8;i++){const a=Math.PI*2/8*i;spawnParticles(e.x+Math.cos(a)*35,e.y+Math.sin(a)*35,'#ff44ff',2,2);}
+                }
+
+                // Clone spawning (every 6 seconds if not invisible)
+                if(!e.isHidden && e.patternTimer>6){
+                    e.patternTimer=0;
+                    if(e.cloneCount<3 + Math.floor(wave/5)){
+                        const angle=Math.random()*Math.PI*2;
+                        enemies.push({
+                            x:e.x+Math.cos(angle)*80, y:e.y+Math.sin(angle)*80,
+                            type:'boss', bossVariant:'shadowclone', bossName:'暗影分身',
+                            w:40, h:35, hp:60, maxHp:60, speed:2.5, color:'#aa44ff', score:100,
+                            shootRate:0.03, shootTimer:0, phase:Math.random()*6.28, patternTimer:0,
+                            isClone:true, cloneOwner:e
+                        });
+                        e.cloneCount++;
+                        playSFX('powerup'); // sound effect for clone spawn
+                    } else {
+                        // All clones despawn after 15 seconds
+                        enemies=enemies.filter(x=>!(x.isClone && Date.now()-x.spawnTime>15000));
+                    }
+                }
+
+                // Clone shooting at player
+                if(!e.isHidden){
+                    const a=Math.atan2(player.y-e.y,player.x-e.x);
+                    bullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(a)*5,vy:Math.sin(a)*5,w:6,h:8,color:'#aa44ff',damage:-18,isEnemy:true});
+                }
+
+                // Teleport dash at 40% HP
+                if(hpRatio<0.4 && e.patternTimer>2){
+                    e.patternTimer=0;
+                    e.x=Math.random()*(canvas.width-100)+50;
+                    e.y=Math.random()*canvas.height*0.3+50;
+                    spawnParticles(e.x,e.y,'#ff44ff',15,4);
+                }
+            }
+
+            // --- Boss-3: Devastator — Three Phase Transformation ---
+            else if(e.bossVariant==='devastator'){
+                const hpRatio=e.hp/e.maxHp;
+                let targetPhase=1;
+                if(hpRatio<0.66) targetPhase=2;
+                if(hpRatio<0.33) targetPhase=3;
+
+                // Phase transition
+                if(e.currentPhase!==targetPhase){
+                    e.currentPhase=targetPhase;
+                    const oldHp=e.hp;
+                    const newMax=e.maxHp*1.5; // HP boost on transformation
+                    e.hp=Math.min(oldHp, newMax);
+                    e.maxHp=newMax;
+
+                    // Visual transition effects
+                    for(let i=0;i<20;i++){const a=Math.PI*2/20*i;spawnParticles(e.x+Math.cos(a)*40,e.y+Math.sin(a)*40,'#ff8800',3,5);}
+                    screenShake.intensity=12;
+
+                    if(targetPhase===2){
+                        e.speed*=1.5; // Phase 2: faster
+                        e.w=85; e.h=70; // Bigger
+                        showPowerupNotify('⚡ Phase 2 — 狂暴模式!');
+                    } else if(targetPhase===3){
+                        e.speed*=1.3;
+                        e.w=95; e.h=80; // Massive
+                        showPowerupNotify('💀 Phase 3 — 毀滅形態!');
+                    }
+                }
+
+                // Phase-specific attacks
+                const hpRatioNow=e.hp/e.maxHp;
+
+                if(e.currentPhase===1){
+                    // Normal aimed shots
+                    if(e.patternTimer>2){e.patternTimer=0;const a=Math.atan2(player.y-e.y,player.x-e.x);bullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(a)*5,vy:Math.sin(a)*5,w:6,h:8,color:'#ff8800',damage:-18,isEnemy:true});}
+                } else if(e.currentPhase===2){
+                    // Phase 2: Spiral + aimed burst every 3s
+                    if(e.patternTimer>1.2){e.patternTimer=0;const spiralAngle=e.phase*0.3+Date.now()*0.002;for(let i=0;i<4;i++){const a=spiralAngle+i*Math.PI/2;bullets.push({x:e.x,y:e.y,vx:Math.cos(a)*4,vy:Math.sin(a)*4,w:5,h:7,color:'#ffaa00',damage:-15,isEnemy:true});}}
+                } else {
+                    // Phase 3: Triple spread + homing attempt every 2s
+                    if(e.patternTimer>2){e.patternTimer=0;const a=Math.atan2(player.y-e.y,player.x-e.x);for(let i=-2;i<=2;i++){bullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(a+i*0.3)*6,vy:Math.sin(a+i*0.3)*6,w:7,h:9,color:'#ff4400',damage:-22,isEnemy:true});}}
+                    // Extra heavy shot every 5s in phase 3
+                    if(e.patternTimer>5){e.patternTimer=0;const a=Math.atan2(player.y-e.y,player.x-e.x);bullets.push({x:e.x,y:e.y,vx:Math.cos(a)*8,vy:Math.sin(a)*8,w:10,h:12,color:'#ff0000',damage:-35,isEnemy:true});}
+                }
+            }
+
+            // --- Base boss shooting (for all variants) ---
+            if(e.shootRate>0 && !e.isHidden){
+                e.shootTimer+=dt;
+                const effectiveShootRate=e.currentPhase===2?1.3:(e.currentPhase===3?1.5:1);
+                if(e.shootTimer>1/(e.shootRate*effectiveShootRate)){
+                    e.shootTimer=0;
+                    // This is handled by variant-specific logic above mostly
+                }
+            }
+
+            return e.y<canvas.height+80 && e.hp>0;
+        }
+
+        // --- NEW ENEMY TYPE LOGIC ---
+
+        // Sinker: Zigzag movement (fast, low HP)
+        else if(e.type==='sinker'){
+            const baseSpeed=e.speed*ds.enemySpeedMul;
+            e.y+=baseSpeed;
+            e.x+=Math.sin(Date.now()*0.005+e.phase)*4; // Zigzag amplitude 4px per frame
+            return e.y<canvas.height+60 && e.hp>0;
+        }
+
+        // Tank: Slow, high HP, shoots occasionally
+        else if(e.type==='tank'){
+            e.y+=e.speed*ds.enemySpeedMul;
+            if(e.shootRate>0){
+                e.shootTimer+=dt;
+                if(e.shootTimer>1/e.shootRate&&Math.random()<0.4){
+                    e.shootTimer=0;
+                    const a=Math.atan2(player.y-e.y,player.x-e.x);
+                    bullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(a)*3.5,vy:Math.sin(a)*3.5,w:7,h:10,color:'#aaaaff',damage:-12,isEnemy:true});
+                }
+            }
+            return e.y<canvas.height+60 && e.hp>0;
+        }
+
+        // Healer: Slow, restores nearby allies' HP
+        else if(e.type==='healer'){
+            e.y+=e.speed*ds.enemySpeedMul;
+            // Heal nearby enemies every 2 seconds
+            e.healTimer=(e.healTimer||0)+dt;
+            if(e.healTimer>120){ // ~2 seconds at 60fps
+                e.healTimer=0;
+                let healedCount=0;
+                for(const ally of enemies){
+                    if(ally===e||ally.type==='boss')continue;
+                    const dx=ally.x-e.x,dy=ally.y-e.y;
+                    if(dx*dx+dy*dy<80*80 && ally.hp<ally.maxHp){ // 80px radius
+                        ally.hp=Math.min(ally.maxHp,ally.hp+15);
+                        spawnHealParticles(ally.x,ally.y-20);
+                        healedCount++;
+                    }
+                }
+                if(healedCount>0) playSFX('heal');
+            }
+            return e.y<canvas.height+60 && e.hp>0;
+        }
+
+        // Sniper: Medium speed, highly accurate long-range shots
+        else if(e.type==='sniper'){
+            const baseSpeed=e.speed*ds.enemySpeedMul;
+            e.y+=baseSpeed*0.7; // Slightly slower descent
+            // Strafe toward player horizontally
+            if(player.x>e.x) e.x+=1.5;
+            else e.x-=1.5;
+
+            // Very accurate shots (3x per second when close enough)
+            if(e.y>200 && e.shootRate>0){ // Only shoots when in range
+                e.shootTimer+=dt;
+                const rate=e.shootRate*2; // Faster fire rate at range
+                if(e.shootTimer>1/rate&&Math.random()<0.5){
+                    e.shootTimer=0;
+                    const a=Math.atan2(player.y-e.y,player.x-e.x);
+                    bullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(a)*7,vy:Math.sin(a)*7,w:4,h:6,color:'#ff66ff',damage:-10,isEnemy:true}); // Low damage but very accurate and fast
+                }
+            }
+            return e.y<canvas.height+60 && e.hp>0;
+        }
+
+        // --- Original enemy logic ---
+        else {
+            e.y+=e.speed*ds.enemySpeedMul;
+            if(e.type==='fighter') e.x+=Math.sin(Date.now()*0.003+e.y*0.1)*2;
+            if(e.shootRate>0){
+                e.shootTimer+=dt;
+                if(e.shootTimer>1/e.shootRate&&Math.random()<0.3){
+                    e.shootTimer=0;
+                    const a=Math.atan2(player.y-e.y,player.x-e.x);
+                    bullets.push({x:e.x,y:e.y+e.h/2,vx:Math.cos(a)*4,vy:Math.sin(a)*4,w:5,h:8,color:'#f0f',damage:-15,isEnemy:true});
+                }
+            }
+            return e.y<canvas.height+60 && e.hp>0;
+        }
+    });
+
+    // Clean up dead clones after their time
+    enemies=enemies.filter(e=>!(e.isClone&&Date.now()-(e.spawnTime||Date.now())>15000));
+}
+
+// --- Draw Enemies (updated for new types) ---
+function drawEnemies(){
+    enemies.forEach(e=>{
+        ctx.save();
+        ctx.translate(e.x,e.y);
+
+        // Boss drawing
+        if(e.type==='boss' && e.bossVariant){
+            const isVisible=!e.isHidden;
+            const alpha=e.isHidden?0.2:1;
+            ctx.globalAlpha=alpha;
+
+            if(e.bossVariant==='starship'){
+                ctx.shadowBlur=25;ctx.shadowColor='#ff4444';
+                // Ship body
+                const g=ctx.createRadialGradient(0,0,10,0,0,45);
+                g.addColorStop(0,'#fff');g.addColorStop(0.3,'#f44');g.addColorStop(1,'#600');
+                ctx.fillStyle=g;
+                ctx.beginPath();ctx.moveTo(-40,-20);ctx.lineTo(-20,-35);ctx.lineTo(20,-35);ctx.lineTo(40,-20);
+                ctx.lineTo(50,0);ctx.lineTo(40,20);ctx.lineTo(-40,20);ctx.closePath();ctx.fill();
+                // Wings
+                ctx.fillStyle='#a00';
+                ctx.beginPath();ctx.moveTo(-30,-10);ctx.lineTo(-55,-25);ctx.lineTo(-50,10);ctx.closePath();ctx.fill();
+                ctx.beginPath();ctx.moveTo(30,-10);ctx.lineTo(55,-25);ctx.lineTo(50,10);ctx.closePath();ctx.fill();
+            } else if(e.bossVariant==='shadowqueen'){
+                ctx.shadowBlur=20;ctx.shadowColor='#aa44ff';
+                const g=ctx.createRadialGradient(0,0,5,0,0,35);
+                g.addColorStop(0,e.isHidden?'rgba(170,68,255,0.3)':'#fff');g.addColorStop(0.4,'#aa44ff');g.addColorStop(1,'transparent');
+                ctx.fillStyle=g;ctx.beginPath();for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/2,r=e.w/2;if(i===0)ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);else ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
+                ctx.closePath();ctx.fill();
+                // Crown effect
+                if(!e.isHidden){ctx.fillStyle='#ff44ff';for(let i=0;i<5;i++){const a=Math.PI*2/5*i;ctx.beginPath();ctx.arc(Math.cos(a)*15,-25+Math.sin(a)*5,3,0,6.28);ctx.fill();}}
+            } else if(e.bossVariant==='devastator'){
+                ctx.shadowBlur=30;ctx.shadowColor='#ff8800';
+                const color=e.currentPhase===1?'#ffaa44':(e.currentPhase===2?'#ff6600':'#ff2200');
+                const g=ctx.createRadialGradient(0,0,5,0,0,e.w/2);
+                g.addColorStop(0,'#fff');g.addColorStop(0.3,color);g.addColorStop(1,'#400');
+                ctx.fillStyle=g;
+                ctx.beginPath();ctx.moveTo(-e.w/2,-e.h/3);ctx.lineTo(-e.w/3,-e.h/2);ctx.lineTo(e.w/3,-e.h/2);ctx.lineTo(e.w/2,-e.h/3);
+                ctx.lineTo(e.w/2,e.h/3);ctx.lineTo(e.w/3,e.h/2);ctx.lineTo(-e.w/3,e.h/2);ctx.lineTo(-e.w/2,e.h/3);ctx.closePath();ctx.fill();
+                // Phase indicator
+                if(e.currentPhase>=2){ctx.fillStyle='#ff0';ctx.beginPath();ctx.arc(0,-5,6+Math.sin(Date.now()*0.01)*2,0,6.28);ctx.fill();}
+            }
+
+            ctx.globalAlpha=1;
+
+            // Boss HP bar
+            if(!e.isClone){
+                const hpRatio=e.hp/e.maxHp;
+                ctx.fillStyle='#300';ctx.fillRect(-45,-e.h/2-18,90,6);
+                ctx.fillStyle=hpRatio>0.5?'#f00':(hpRatio>0.25?'#ff0':'#f0f');ctx.fillRect(-45,-e.h/2-18,90*hpRatio,6);
+            }
+
+        // Clone drawing (smaller shadow queen clones)
+        } else if(e.isClone){
+            ctx.globalAlpha=0.6;
+            ctx.shadowBlur=10;ctx.shadowColor='#aa44ff';
+            const g=ctx.createRadialGradient(0,0,3,0,0,20);
+            g.addColorStop(0,'#fff');g.addColorStop(0.5,'#8833cc');g.addColorStop(1,'transparent');
+            ctx.fillStyle=g;ctx.beginPath();for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/2,r=20;if(i===0)ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);else ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
+            ctx.closePath();ctx.fill();
+            ctx.globalAlpha=1;
+
+        // New enemy types drawing
+        } else if(e.type==='sinker'){
+            ctx.shadowBlur=12;ctx.shadowColor='#88ff88';
+            ctx.fillStyle='#88ff88';
+            ctx.beginPath();ctx.moveTo(0,-e.h/2);ctx.lineTo(e.w/2,5);ctx.lineTo(0,e.h/2);ctx.lineTo(-e.w/2,5);ctx.closePath();ctx.fill();
+            // Speed lines
+            for(let i=0;i<3;i++){const lx=-8+i*8;ctx.strokeStyle='rgba(136,255,136,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(lx,-e.h/2-5-i*3);ctx.lineTo(lx,e.h/2+5+i*3);ctx.stroke();}
+        } else if(e.type==='tank'){
+            ctx.shadowBlur=15;ctx.shadowColor='#aaaaff';
+            const g=ctx.createRadialGradient(0,0,5,0,0,e.w/2);
+            g.addColorStop(0,'#fff');g.addColorStop(0.4,'#88aaff');g.addColorStop(1,'#3355aa');
+            ctx.fillStyle=g;ctx.fillRect(-e.w/2,-e.h/2,e.w,e.h);
+            // Treads
+            ctx.fillStyle='#556';ctx.fillRect(-e.w/2-4,-e.h/2+5,6,e.h-10);ctx.fillRect(e.w/2-2,-e.h/2+5,6,e.h-10);
+        } else if(e.type==='healer'){
+            ctx.shadowBlur=15;ctx.shadowColor='#00ff88';
+            // Pulsing glow
+            const pulse=Math.sin(Date.now()*0.004)*0.3+0.7;
+            ctx.fillStyle=`rgba(0,255,136,${pulse})`;ctx.beginPath();ctx.arc(0,-e.h/2-8,6,0,6.28);ctx.fill();
+            // Body — cross shape
+            ctx.fillStyle='#00cc66';
+            ctx.fillRect(-4,-e.h/2,8,e.h);ctx.fillRect(-e.w/2,-4,e.w,8);
+            // Glow radius indicator (subtle)
+            ctx.strokeStyle=`rgba(0,255,136,${pulse*0.2})`;ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,80,0,6.28);ctx.stroke();
+        } else if(e.type==='sniper'){
+            ctx.shadowBlur=12;ctx.shadowColor='#ff66ff';
+            const g=ctx.createRadialGradient(0,0,3,0,0,e.w/2);
+            g.addColorStop(0,'#fff');g.addColorStop(0.5,'#ff66ff');g.addColorStop(1,'#aa00aa');
+            ctx.fillStyle=g;
+            ctx.beginPath();ctx.moveTo(0,-e.h/2);ctx.lineTo(e.w/2,e.h/4);ctx.lineTo(0,e.h/2);ctx.lineTo(-e.w/2,e.h/4);ctx.closePath();ctx.fill();
+            // Scope indicator
+            const scopeAlpha=Math.sin(Date.now()*0.008)*0.3+0.5;
+            ctx.strokeStyle=`rgba(255,102,255,${scopeAlpha})`;ctx.lineWidth=1;
+            ctx.beginPath();ctx.arc(0,0,e.w/2+5,0,6.28);ctx.stroke();
+        } else {
+            // Original enemies (drone/fighter/bomber)
+            const glow=e.type==='bomber'?'#f0a':(e.type==='fighter'?'#fa0':'#f44');
+            ctx.shadowBlur=15;ctx.shadowColor=glow;ctx.fillStyle=e.color;
+            ctx.beginPath();
+            if(e.type==='drone'){ctx.moveTo(0,-e.h/2);ctx.lineTo(e.w/2,0);ctx.lineTo(0,e.h/2);ctx.lineTo(-e.w/2,0);}
+            else if(e.type==='fighter'){ctx.moveTo(0,-e.h/2);ctx.lineTo(e.w/2,e.h/3);ctx.lineTo(e.w/4,e.h/2);ctx.lineTo(-e.w/4,e.h/2);ctx.lineTo(-e.w/2,e.h/3);}
+            else{ctx.arc(0,0,e.w/2,0,6.28);}
+            ctx.closePath();ctx.fill();
+        }
+
+        // HP bar for non-boss enemies with low HP
+        if(e.type!=='boss' && e.hp<e.maxHp){
+            const hpRatio=e.hp/e.maxHp;
+            ctx.fillStyle='#300';ctx.fillRect(-15,-e.h/2-8,30,3);
+            ctx.fillStyle=hpRatio>0.5?'#0f0':(hpRatio>0.25?'#ff0':'#f00');ctx.fillRect(-15,-e.h/2-8,30*hpRatio,3);
+        }
+
+        ctx.restore();
+    });
+}
 
 // --- Meteors ---
 function spawnMeteor(){const sz=Math.random()*30+15;meteors.push({x:Math.random()*canvas.width,y:-sz,vx:(Math.random()-0.5)*2,vy:Math.random()*2+1.5,size:sz,rotation:Math.random()*6.28,rotSpeed:(Math.random()-0.5)*0.05,hp:sz>25?3:1,vertices:genMeteor(sz)});}
@@ -318,9 +737,9 @@ function drawPowerups(){powerups.forEach(p=>{const gl=Math.sin(p.pulse)*0.3+0.7;
     else{ctx.shadowBlur=20;ctx.shadowColor='#f0f';ctx.fillStyle=`rgba(255,0,255,${gl})`;ctx.beginPath();for(let i=0;i<6;i++){const a=(Math.PI/3)*i-0.524;if(i===0)ctx.moveTo(Math.cos(a)*p.size,Math.sin(a)*p.size);else ctx.lineTo(Math.cos(a)*p.size,Math.sin(a)*p.size);}ctx.closePath();ctx.fill();}
     ctx.restore();});}
 
-// --- Collision Detection (FIXED v5.1) ---
+// --- Collision Detection (updated for new enemy types) ---
 function checkCollisions(){
-    // Player bullets vs enemies — direct AABB, no double-splice bugs
+    // Player bullets vs enemies
     for(let i=bullets.length-1;i>=0;i--){
         const b=bullets[i]; if(b.isEnemy)continue;
         for(let j=enemies.length-1;j>=0;j--){
@@ -332,12 +751,12 @@ function checkCollisions(){
                 bullets.splice(i,1);
                 spawnParticles(b.x,b.y,'#fff',3,3);playSFX('hit');
                 if(e.hp<=0){
-                    score+=e.score;combo++;comboTimer=2;enemiesKilledInWave++;
+                    score+=e.score||100;combo++;comboTimer=2;enemiesKilledInWave++;
                     spawnParticles(e.x,e.y,e.color,15,5);screenShake.intensity=e.type==='boss'?10:4;playSFX('explosion');
-                    if(e.type!=='boss'){spawnPowerup(e.x,e.y);}
-                    else{for(let k=0;k<3;k++)spawnPowerup(e.x+(k-1)*20,e.y);}
+                    if(!e.isClone && e.type!=='boss'){spawnPowerup(e.x,e.y);}
+                    else if(e.type==='boss'&&!e.isClone){for(let k=0;k<3;k++)spawnPowerup(e.x+(k-1)*20,e.y);}
                 }
-                break; // bullet consumed
+                break;
             }
         }
     }
@@ -354,7 +773,7 @@ function checkCollisions(){
     enemies.forEach(e=>{
         if(Math.abs(e.x-player.x)<(e.w/2+player.w/2)&&Math.abs(e.y-player.y)<(e.h/2+player.h/2)){
             player.hp-=30;screenShake.intensity=8;spawnParticles(player.x,player.y,'#f00',12,5);
-            if(e.type!=='boss')e.hp=0;else e.y+=30;
+            if(!e.isClone && e.type!=='boss')e.hp=0;else if(e.type==='boss'&&!e.isClone)e.y+=30;
         }
     });
 
@@ -378,28 +797,40 @@ function checkCollisions(){
 
 }
 
-function showPowerupNotify(t){const el=document.getElementById('powerup-notify');el.textContent=t;el.style.opacity=1;setTimeout(()=>{el.style.opacity=0;},1500);}
+function showPowerupNotify(t){const el=document.getElementById('powerup-notify');el.textContent=t;el.style.opacity=1;setTimeout(()=>{el.style.opacity=0;},2000);}
 
-// --- Wave System (FIXED: proper kill tracking) ---
+// --- Wave System (updated for new enemies and boss variants) ---
 let enemiesKilledInWave=0, waveTransitionTimer=0;
 const maxEnemiesPerWave=[8,12,16,20,30];
 
 function updateWaves(dt){
-    if(waveTransitionTimer>0){waveTransitionTimer-=dt;return;} // Don't reset kill counter during transition!
+    if(waveTransitionTimer>0){waveTransitionTimer-=dt;return;}
     const ds=diffSettings[difficulty];
-    const maxE=Math.min(maxEnemiesPerWave[Math.min(wave-1,maxEnemiesPerWave.length-1)],40);
+    const maxE=Math.min(maxEnemiesPerWave[Math.min(wave-1,maxEnemiesPerWave.length-1)],45);
 
-    // Spawn enemies (scaled by difficulty)
-    if(enemies.filter(e=>e.type!=='boss').length<maxE&&Math.random()<0.02*ds.spawnRate+wave*0.005){spawnEnemy();}
-    // Spawn meteors (scaled by difficulty)
+    // Spawn enemies (scaled by difficulty, weighted toward new types at higher waves)
+    if(enemies.filter(e=>e.type!=='boss').length<maxE&&Math.random()<0.02*ds.spawnRate+wave*0.006){spawnEnemy();}
+
+    // Spawn meteors
     if(Math.random()<(0.01+wave*0.003)*ds.meteorFreq){spawnMeteor();}
 
-    // Check wave completion — FIX: use correct comparison
+    // Check wave completion — Boss every 3 waves
     const remaining = enemies.filter(e=>e.type!=='boss').length;
     if(enemiesKilledInWave>=maxE&&remaining===0){
         waveTransitionTimer=2;enemiesKilledInWave=0;wave++;
-        if(wave%3===0){document.getElementById('boss-warning').style.opacity=1;if(bossWarningTimeout)clearTimeout(bossWarningTimeout);bossWarningTimeout=setTimeout(()=>{document.getElementById('boss-warning').style.opacity=0;spawnBoss();},2500);}
-        else{showPowerupNotify(`Wave ${wave-1} Complete!`);player.hp=Math.min(player.maxHp,player.hp+ds.waveHeal);}
+        // Boss appears every 3 waves (starting from wave 3)
+        if(wave%3===0 && wave>=3){
+            document.getElementById('boss-warning').style.opacity=1;
+            if(bossWarningTimeout)clearTimeout(bossWarningTimeout);
+            bossWarningTimeout=setTimeout(()=>{
+                document.getElementById('boss-warning').style.opacity=0;
+                playSFX('boss');
+                spawnBoss();
+            },2500);
+        } else {
+            showPowerupNotify(`Wave ${wave-1} Complete!`);
+            player.hp=Math.min(player.maxHp,player.hp+ds.waveHeal);
+        }
     }
 }
 
@@ -415,7 +846,11 @@ function gameLoop(timestamp){
 
     const ml=keys['KeyA']||keys['ArrowLeft']||mobileLeft,mr=keys['KeyD']||keys['ArrowRight']||mobileRight;
     player.x+=(mr?1:0)*player.speed-(ml?1:0)*player.speed;player.x=Math.max(player.w/2,Math.min(canvas.width-player.w/2,player.x));
-    player.y=canvas.height-80;
+// Allow vertical movement within safe zone (HUD area at top)
+const minY = Math.max(canvas.height * 0.15, 70);
+const maxY = canvas.height - 120;
+player.y += (mr ? 1 : 0) * player.speed * 0.6 - (ml ? 1 : 0) * player.speed * 0.6;
+player.y = Math.max(minY, Math.min(maxY, player.y));
 
     if(keys['Space']||mobileFireing)shoot();
     if(player.shootCooldown>0)player.shootCooldown-=dt;if(player.invincible>0)player.invincible-=dt;
@@ -444,7 +879,7 @@ function startGame(){
     player.hp=ds.playerHp;player.maxHp=ds.playerHp;
     player.weaponLevel=1;player.invincible=2;
     bullets=[];enemies=[];particles=[];powerups=[];meteors=[];screenShake.intensity=0;
-    enemiesKilledInWave=0;waveTransitionTimer=0;
+    enemiesKilledInWave=0;waveTransitionTimer=0;activeBoss=null;
     document.getElementById('start-screen').style.display='none';
     document.getElementById('gameover-screen').style.display='none';
     initStars();lastTime=performance.now();animFrame=requestAnimationFrame(gameLoop);
