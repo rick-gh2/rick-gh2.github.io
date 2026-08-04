@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI修仙：無限人生</title>
+<style>
+:root {
+  --bg-color: #121212;
+  --panel-bg: #1e1e1e;
+  --text-main: #e0e0e0;
+  --text-muted: #888;
+  --accent: #d4af37;
+  --danger: #ff4c4c;
+  --btn-bg: #2c2c2c;
+  --btn-hover: #3c3c3c;
+}
+
+body {
+  font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+#game-container {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  max-width: 900px;
+  height: 100%;
+}
+
+/* Left stats panel */
+#stats-panel {
+  flex: 1;
+  background-color: var(--panel-bg);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  border-bottom: 1px dashed #444;
+  padding-bottom: 5px;
+}
+
+.stat-value {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+/* Right main panel */
+#main-panel {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#log-panel {
+  flex: 1;
+  background-color: var(--panel-bg);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-entry {
+  padding: 10px;
+  background-color: #252525;
+  border-left: 4px solid #555;
+  border-radius: 4px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.log-entry.event { border-left-color: var(--accent); }
+.log-entry.danger { border-left-color: var(--danger); }
+.log-entry.system { border-left-color: #4caf50; color: #4caf50;}
+
+/* Action panel */
+#action-panel {
+  background-color: var(--panel-bg);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+button {
+  background-color: var(--btn-bg);
+  color: var(--text-main);
+  border: 1px solid #555;
+  padding: 12px 24px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  max-width: 300px;
+}
+
+button:hover:not(:disabled) {
+  background-color: var(--btn-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#choices-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <!-- Stats panel -->
+  <div id="stats-panel">
+    <h2 style="margin-top: 0; color: var(--accent); text-align: center;">人物狀態</h2>
+    <div class="stat-row"><span>年齡</span><span id="stat-age" class="stat-value">0</span></div>
+    <div class="stat-row"><span>壽元</span><span id="stat-lifespan" class="stat-value">80</span></div>
+    <div class="stat-row"><span>境界</span><span id="stat-realm" class="stat-value">凡人</span></div>
+    <div class="stat-row"><span>靈根</span><span id="stat-root" class="stat-value">-</span></div>
+    <hr style="border-color: #333; width: 100%;">
+    <div class="stat-row"><span>生命 (HP)</span><span id="stat-hp" class="stat-value">100</span></div>
+    <div class="stat-row"><span>修為</span><span id="stat-power" class="stat-value">0</span></div>
+    <div class="stat-row"><span>氣運</span><span id="stat-luck" class="stat-value">0</span></div>
+    <div class="stat-row"><span>悟性</span><span id="stat-intel" class="stat-value">0</span></div>
+    <div class="stat-row"><span>魅力</span><span id="stat-charm" class="stat-value">0</span></div>
+  </div>
+
+  <!-- Main panel -->
+  <div id="main-panel">
+    <div id="log-panel">
+      <div class="log-entry system">系統啟動，世界生成中...</div>
+    </div>
+    <div id="action-panel">
+      <button id="btn-next" style="display: none;">推進下一年</button>
+      <div id="choices-container">
+        <button id="btn-start">開始模擬人生</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// === Core Data ===
+const REALMS = [
+  { name: "凡人", reqPower: 0, lifespan: 80 },
+  { name: "練氣期", reqPower: 100, lifespan: 120 },
+  { name: "築基期", reqPower: 500, lifespan: 200 },
+  { name: "金丹期", reqPower: 2000, lifespan: 500 },
+  { name: "元嬰期", reqPower: 8000, lifespan: 1000 }
+];
+
+const ROOTS = ["天靈根", "變異靈根", "真靈根", "偽靈根", "無靈根"];
+
+// Player initial state
+let player = {
+  age: 0,
+  hp: 100,
+  power: 0,
+  luck: 0,
+  intel: 0,
+  charm: 0,
+  root: "",
+  realmIndex: 0,
+  isDead: false
+};
+
+// === Event Pool (MVP fixed events) ===
+const EVENT_POOL = [
+  {
+    id: "e1",
+    condition: (p) => p.age >= 16 && p.realmIndex === 0 && p.root !== "無靈根",
+    text: "你在山中採藥時，遇到一位重傷的白髮老人。他看你骨骼驚奇，問你是否願意拜他為師。",
+    choices: [
+      { text: "立刻磕頭拜師", effect: { power: 100, luck: 10 }, log: "老人大笑三聲，傳你《長生訣》，你正式踏入修仙界！" },
+      { text: "覺得是騙子，轉身就走", effect: { intel: 5 }, log: "你警惕地離開了。雖然錯失仙緣，但你覺得安全第一。" }
+    ]
+  },
+  {
+    id: "e2",
+    condition: (p) => p.age >= 10 && p.age <= 15,
+    text: "村裡來了個雲遊道士，說你印堂發黑，要賣你一張平安符（消耗氣運）。",
+    choices: [
+      { text: "買下平安符", effect: { luck: -5, hp: 20 }, log: "你花光積蓄買了符，感覺身體硬朗了些。" },
+      { text: "不理他", effect: { hp: -10 }, log: "幾天後你染了風寒，大病一場。" }
+    ]
+  },
+  {
+    id: "e3",
+    condition: (p) => p.realmIndex >= 1,
+    text: "你在洞府打坐時，突然感覺靈氣暴動，似乎是突破的契機！",
+    choices: [
+      { text: "強行衝關", effect: { power: 300, hp: -30 }, log: "你咬牙強衝，雖然經脈受損吐血，但修為大增！" },
+      { text: "穩紮穩打", effect: { power: 100, intel: 5 }, log: "你選擇平息靈氣，雖然進境緩慢，但心境更加圓滿。" }
+    ]
+  },
+  {
+    id: "e4", // Daily event
+    condition: (p) => true,
+    text: "今年平平安安地過去了，你在日常修煉中略有心得。",
+    choices: [
+      { text: "繼續努力", effect: { power: 20 }, log: "日積月累，修為穩步上升。" }
+    ]
+  }
+];
+
+// === Core Logic & UI ===
+const ui = {
+  age: document.getElementById('stat-age'),
+  lifespan: document.getElementById('stat-lifespan'),
+  realm: document.getElementById('stat-realm'),
+  root: document.getElementById('stat-root'),
+  hp: document.getElementById('stat-hp'),
+  power: document.getElementById('stat-power'),
+  luck: document.getElementById('stat-luck'),
+  intel: document.getElementById('stat-intel'),
+  charm: document.getElementById('stat-charm'),
+  logPanel: document.getElementById('log-panel'),
+  btnNext: document.getElementById('btn-next'),
+  choicesContainer: document.getElementById('choices-container'),
+  btnStart: document.getElementById('btn-start')
+};
+
+function updateStatsUI() {
+  ui.age.innerText = player.age;
+  ui.lifespan.innerText = REALMS[player.realmIndex].lifespan;
+  ui.realm.innerText = REALMS[player.realmIndex].name;
+  ui.root.innerText = player.root;
+  ui.hp.innerText = player.hp;
+  ui.power.innerText = player.power;
+  ui.luck.innerText = player.luck;
+  ui.intel.innerText = player.intel;
+  ui.charm.innerText = player.charm;
+}
+
+function appendLog(text, type = "normal") {
+  const el = document.createElement('div');
+  el.className = `log-entry ${type}`;
+  el.innerText = `【${player.age}歲】 ${text}`;
+  ui.logPanel.appendChild(el);
+  ui.logPanel.scrollTop = ui.logPanel.scrollHeight;
+}
+
+// Initialize game
+ui.btnStart.onclick = () => {
+  player.root = ROOTS[Math.floor(Math.random() * ROOTS.length)];
+  player.luck = Math.floor(Math.random() * 50) + 10;
+  player.intel = Math.floor(Math.random() * 50) + 10;
+  player.charm = Math.floor(Math.random() * 50) + 10;
+
+  ui.logPanel.innerHTML = '';
+  appendLog(`你出生了。經檢測，你的天賦為：${player.root}。`, "system");
+  updateStatsUI();
+
+  ui.btnStart.style.display = 'none';
+  ui.btnNext.style.display = 'block';
+};
+
+// Advance to next year
+ui.btnNext.onclick = () => {
+  if (player.isDead) return;
+
+  player.age++;
+  const maxAge = REALMS[player.realmIndex].lifespan;
+
+  // Lifespan check
+  if (player.age > maxAge) {
+    player.isDead = true;
+    player.hp = 0;
+    appendLog("大限已至，壽元耗盡。你坐化於天地之間。", "danger");
+    updateStatsUI();
+    gameOver();
+    return;
+  }
+
+  // Simple recovery and natural growth
+  if (player.hp > 0 && player.hp < 100) player.hp += 5;
+
+  // Trigger event
+  triggerEvent();
+};
+
+function triggerEvent() {
+  // Filter events that match conditions
+  const validEvents = EVENT_POOL.filter(e => e.condition(player));
+  const event = validEvents[Math.floor(Math.random() * validEvents.length)];
+
+  appendLog(event.text, "event");
+
+  if (event.choices && event.choices.length > 0) {
+    ui.btnNext.style.display = 'none'; // Hide next button, force choice
+    ui.choicesContainer.innerHTML = ''; // Clear old options
+
+    event.choices.forEach(choice => {
+      const btn = document.createElement('button');
+      btn.innerText = choice.text;
+      btn.onclick = () => handleChoice(choice);
+      ui.choicesContainer.appendChild(btn);
+    });
+  } else {
+    updateStatsUI();
+  }
+}
+
+function handleChoice(choice) {
+  // Apply stat changes
+  for (let key in choice.effect) {
+    player[key] += choice.effect[key];
+  }
+
+  // Boundary check
+  if (player.hp > 100 && player.realmIndex === 0) player.hp = 100;
+
+  appendLog(choice.log, "normal");
+
+  // Death check
+  if (player.hp <= 0) {
+    player.hp = 0;
+    player.isDead = true;
+    appendLog("你受傷過重，身死道消。", "danger");
+    updateStatsUI();
+    gameOver();
+    return;
+  }
+
+  // Realm upgrade check
+  checkRealmUpgrade();
+
+  updateStatsUI();
+
+  // Restore UI
+  ui.choicesContainer.innerHTML = '';
+  ui.btnNext.style.display = 'block';
+}
+
+function checkRealmUpgrade() {
+  const nextRealm = REALMS[player.realmIndex + 1];
+  if (nextRealm && player.power >= nextRealm.reqPower) {
+    player.realmIndex++;
+    player.hp = 100; // Restore HP on breakthrough
+    appendLog(`【境界突破】天降祥瑞！你成功突破至【${nextRealm.name}】，壽元大增！`, "system");
+  }
+}
+
+function gameOver() {
+  ui.btnNext.style.display = 'none';
+  ui.choicesContainer.innerHTML = '';
+  const restartBtn = document.createElement('button');
+  restartBtn.innerText = "重入輪迴 (重新開始)";
+  restartBtn.onclick = () => location.reload();
+  ui.choicesContainer.appendChild(restartBtn);
+}
+</script>
+</body>
+</html>
