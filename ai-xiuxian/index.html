@@ -2,11 +2,11 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
 <title>AI修仙：無限人生</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#0a0a12;color:#e8e6e3;-webkit-tap-highlight-color:transparent;user-select:none}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:none}
+html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#0a0a12;color:#e8e6e3;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 
 /* ===== LANDING PAGE ===== */
 #landing{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100vw;position:relative;overflow:hidden}
@@ -18,7 +18,7 @@ html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang
 .landing-title{font-size:clamp(1.8em,5vw,3em);color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.4),0 0 60px rgba(212,175,55,.2);letter-spacing:6px;font-weight:bold}
 .landing-sub{color:#888;font-size:.95em;text-align:center;line-height:1.6}
 
-#enter-btn{background:linear-gradient(135deg,#d4af37,#f0c060);color:#0a0a12;border:none;padding:16px 56px;font-size:1.2em;font-weight:bold;border-radius:50px;cursor:pointer;animation:pulse-glow 2s ease-in-out infinite;transition:transform .2s}
+#enter-btn{background:linear-gradient(135deg,#d4af37,#f0c060);color:#0a0a12;border:none;padding:16px 56px;font-size:1.2em;font-weight:bold;border-radius:50px;cursor:pointer;animation:pulse-glow 2s ease-in-out infinite;transition:transform .2s;-webkit-tap-highlight-color:transparent}
 #enter-btn:hover,#enter-btn:active{transform:scale(1.06)}
 @keyframes pulse-glow{0%,100%{box-shadow:0 0 20px rgba(212,175,55,.4),0 0 60px rgba(212,175,55,.15)}50%{box-shadow:0 0 35px rgba(212,175,55,.7),0 0 80px rgba(212,175,55,.3)}}
 
@@ -53,29 +53,26 @@ html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang
 .log-entry.danger{border-left-color:#ff4c4c}.log-entry.system{border-left-color:#4caf50;color:#4caf50}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-/* Talent selection */
-#talent-panel{padding:20px;background:#14141f;border-bottom:1px solid #2a2a3a}
+/* Talent selection — 關鍵：touch-action: manipulation */
+#talent-panel{padding:20px;background:#14141f;border-bottom:1px solid #2a2a3a;-webkit-tap-highlight-color:transparent}
 .talent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}
-.talent-card{background:#1a1a28;border:2px solid #2a2a3a;border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s;-webkit-user-select:none;touch-action:manipulation;position:relative}
+.talent-card{background:#1a1a28;border:2px solid #2a2a3a;border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s;-webkit-user-select:none;user-select:none;touch-action:manipulation;position:relative}
 .talent-card:hover{border-color:#d4af37;background:rgba(212,175,55,.08)}
 .talent-card.selected{border-color:#ffd700;box-shadow:0 0 18px rgba(212,175,55,.3);background:rgba(212,175,55,.1)}
-.talent-card:active{transform:scale(.97)}
 .talent-name{color:#d4af37;font-weight:bold;margin-bottom:4px}
 .talent-desc{color:#7a7a8e;font-size:.78em;line-height:1.4}
 .talent-stats{color:#6a9f5e;font-size:.72em;margin-top:5px}
 
-/* Action bar */
+/* Action bar — 關鍵：touch-action: manipulation */
 .action-bar{padding:12px 20px;background:#14141f;border-top:1px solid #2a2a3a;display:flex;flex-direction:column;gap:8px;align-items:center;min-height:60px;max-height:45vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .action-bar::-webkit-scrollbar{width:4px}.action-bar::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
 
 #choices-container{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%}
-.btn-choice{background:#1e1e2e;color:#e8e6e3;border:1px solid #444;padding:9px 18px;border-radius:8px;font-size:.9em;cursor:pointer;transition:all .2s;white-space:nowrap;-webkit-user-select:none;touch-action:manipulation}
+.btn-choice{background:#1e1e2e;color:#e8e6e3;border:1px solid #444;padding:9px 18px;border-radius:8px;font-size:.9em;cursor:pointer;transition:all .2s;white-space:nowrap;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 .btn-choice:hover{background:#2a2a3e;border-color:#d4af37;color:#ffd700}
-.btn-choice:active{transform:scale(.96)}
 
-.btn-action{background:linear-gradient(135deg,#2a2a3e,#1e1e2e);color:#e8e6e3;border:1px solid #444;padding:10px 28px;border-radius:8px;font-size:.95em;cursor:pointer;transition:all .2s}
+.btn-action{background:linear-gradient(135deg,#2a2a3e,#1e1e2e);color:#e8e6e3;border:1px solid #444;padding:10px 28px;border-radius:8px;font-size:.95em;cursor:pointer;transition:all .2s;-webkit-user-select:none;user-select:none}
 .btn-action:hover{border-color:#d4af37;color:#ffd700;background:#2a2a3e}
-.btn-action:active{transform:scale(.97)}
 
 .summary-wrap{text-align:center;padding:30px 20px}
 .summary-title{color:#ffd700;font-size:1.4em;margin-bottom:20px;letter-spacing:3px}
@@ -135,7 +132,7 @@ html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang
       <div class="stat-row"><span class="stat-label">功德</span><span id="s-merit" class="stat-value">0</span></div>
 
       <div style="margin-top:auto;padding-top:12px;text-align:center;border-top:1px solid #2a2a3a">
-        <button onclick="toggleBgm()" id="bgm-btn" style="background:none;border:1px solid #444;color:#888;padding:5px 16px;border-radius:20px;font-size:.8em;cursor:pointer">🎵 BGM</button>
+        <button onclick="toggleBgm()" id="bgm-btn" style="background:none;border:1px solid #444;color:#888;padding:5px 16px;border-radius:20px;font-size:.8em;cursor:pointer;-webkit-user-select:none;user-select:none">🎵 BGM</button>
       </div>
     </div>
 
@@ -154,7 +151,7 @@ html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang
 
 <script>
 // ============================================================
-// DATA — fixed: cond (condition) vs opts (choices) separated!
+// DATA
 // ============================================================
 const REALMS = [
   { name:"凡人",   req:0,     lifespan:80,  cls:"realm-fanren" },
@@ -188,7 +185,6 @@ const TALENTS = [
   { id:"void_affinity",  name:"虛空之體",    desc:"天生亲和空間之力，修煉極快",   e:{pMul:1.6} }
 ];
 
-// Events: cond = condition function, opts = choices array (FIXED!)
 const EVENTS = [
   { id:"child_1", t:"神童之兆", ma:3, xa:8, w:8, text:"你自幼聰穎過人，三歲便能識字，五歲已通曉詩書。村中長者皆稱你為神童。", opts:[{tx:"專心讀書",e:{int:15,lk:5},lg:"你埋首書卷，學識日益深厚。"},{tx:"上山探險",e:{str:10,chr:5},lg:"你翻山越嶺，身體愈加強健。"}]},
   { id:"child_2", t:"山中奇遇", ma:6, xa:10, w:5, text:"你在山中採藥時，發現一株發光的靈芝！", opts:[{tx:"吃下靈芝",e:{hpB:30,lk:10},lg:"你吞下靈芝，全身暖流湧動！"},{tx:"帶回村中賣錢",e:{lk:-5,chr:10},lg:"你把靈芝賣給了路過的商人。"}]},
@@ -253,7 +249,7 @@ function aLog(t, ty="normal") {
 function startGame() {
   document.getElementById('landing').style.display = 'none';
   const gp = document.getElementById('game-page');
-  gp.style.display = 'flex'; // Changed: use flex to match layout
+  gp.style.display = 'flex';
 
   // Random root
   const roll = Math.random();
@@ -267,9 +263,8 @@ function startGame() {
   uStats();
   renderTalents();
   $('talent-panel').style.display = 'block';
-  $('btn-start').style.display = ''; // Changed: show button immediately
+  $('btn-start').style.display = '';
 
-  // Scroll to talent panel on mobile
   setTimeout(() => { $('log-panel').scrollTop = $('log-panel').scrollHeight; }, 100);
 }
 
@@ -277,7 +272,7 @@ function renderTalents() {
   const g = $('talent-grid');
   g.innerHTML = '';
   
-  TALENTS.forEach((t, idx) => {
+  TALENTS.forEach((t) => {
     let sh = '';
     if (t.e.pow) sh += '修為+' + t.e.pow + ' ';
     if (t.e.lk) sh += '氣運+' + t.e.lk + ' ';
@@ -287,20 +282,23 @@ function renderTalents() {
     if (t.e.hpB) sh += 'HP+' + t.e.hpB + ' ';
     if (t.e.merit) sh += '功德+' + t.e.merit;
 
-    // Use data attribute for ID storage, onclick via delegation
     const card = document.createElement('div');
     card.className = 'talent-card';
     card.setAttribute('data-id', t.id);
     card.innerHTML = '<div class="talent-name">' + t.name + '</div><div class="talent-desc">' + t.desc + '</div><div class="talent-stats">' + sh.trim() + '</div>';
-    
-    // Desktop: use click event
-    card.addEventListener('click', function(e) {
+
+    // 關鍵修復：用 touchstart + click 雙重監聽
+    const selectTalent = function(e) {
       e.preventDefault();
-      e.stopPropagation();
       P.tId = t.id;
-      document.querySelectorAll('.talent-card').forEach(x => x.classList.remove('selected'));
+      document.querySelectorAll('.talent-card').forEach(function(x) { x.classList.remove('selected'); });
       card.classList.add('selected');
-    });
+    };
+
+    // touchstart 先觸發（手機快響應）
+    card.addEventListener('touchstart', selectTalent, { passive: false });
+    // click 作為 fallback（桌面）
+    card.addEventListener('click', selectTalent);
     
     g.appendChild(card);
   });
@@ -308,14 +306,13 @@ function renderTalents() {
 
 function confirmTalent() {
   if (!P.tId) {
-    // If no talent selected, auto-pick first one
     P.tId = TALENTS[0].id;
   }
 
-  const t = TALENTS.find(x => x.id === P.tId);
+  const t = TALENTS.find(function(x) { return x.id === P.tId; });
   if (!t) return;
 
-  // Apply talent effects with proper key mapping
+  // Apply talent effects
   for (const k of Object.keys(t.e)) {
     const v = t.e[k];
     switch(k) {
@@ -336,7 +333,6 @@ function confirmTalent() {
 
   aLog('天賦覺醒：<strong>' + t.name + '</strong> — ' + t.desc, "system");
   
-  // Scroll to show first event
   setTimeout(() => { $('log-panel').scrollTop = $('log-panel').scrollHeight; }, 100);
 }
 
@@ -345,14 +341,12 @@ function advanceYear() {
   P.age++;
   const mx = REALMS[P.rI].lifespan;
 
-  // Lifespan check
   if (P.age > mx && P.rI < REALMS.length - 1) {
     P.dead = true; P.hp = 0;
     aLog("大限已至，壽元耗盡。你坐化於天地之間。", "danger");
     uStats(); showSummary(); return;
   }
 
-  // Recovery
   if (P.hp > 0 && P.hp < 100) P.hp += 5;
   if (P.hp > 200) P.hp = 200;
 
@@ -360,21 +354,20 @@ function advanceYear() {
 }
 
 function triggerEvent() {
-  const valid = EVENTS.filter(e =>
-    e.ma <= P.age &&
-    (!e.xa || P.age <= e.xa) &&
-    (!e.rMin || P.rI >= e.rMin) &&
-    (!e.cond || e.cond(P)) &&
-    !P.trig.includes(e.id)
-  );
+  const valid = EVENTS.filter(function(e) {
+    return e.ma <= P.age &&
+      (!e.xa || P.age <= e.xa) &&
+      (!e.rMin || P.rI >= e.rMin) &&
+      (!e.cond || e.cond(P)) &&
+      !P.trig.includes(e.id);
+  });
 
   if (valid.length === 0) {
     aLog("平靜的一年，無事發生。", "normal");
     uStats(); return;
   }
 
-  // Weighted random selection
-  const tw = valid.reduce((s, e) => s + (e.w || 1), 0);
+  const tw = valid.reduce(function(s, e) { return s + (e.w || 1); }, 0);
   let roll = Math.random() * tw;
   for (const ev of valid) {
     roll -= (ev.w || 1);
@@ -390,13 +383,14 @@ function doEvent(ev) {
   if (ev.opts && ev.opts.length > 0) {
     $('btn-next').style.display = 'none';
     $('choices-container').innerHTML = '';
-    ev.opts.forEach(ch => {
+    ev.opts.forEach(function(ch) {
       const b = document.createElement('button');
       b.className = 'btn-choice';
       b.innerText = '▸ ' + ch.tx;
-      // Use pointerdown for instant mobile response
-      b.addEventListener('touchstart', function(e) { e.preventDefault(); pickChoice(ev, ch); }, { passive: false });
-      b.addEventListener('click', function() { if (this.classList.contains('selected')) return; pickChoice(ev, ch); });
+      // 關鍵修復：touchstart + click 雙重監聽
+      const pickHandler = function(e) { e.preventDefault(); pickChoice(ev, ch); };
+      b.addEventListener('touchstart', pickHandler, { passive: false });
+      b.addEventListener('click', pickHandler);
       $('choices-container').appendChild(b);
     });
   } else {
@@ -406,12 +400,11 @@ function doEvent(ev) {
 }
 
 function pickChoice(ev, cho) {
-  // Apply effects with proper key mapping
   if (cho.e.pow && P._pm) P.pow += Math.floor(cho.e.pow * P._pm);
   else if (cho.e.pow) P.pow += cho.e.pow;
 
   for (const k of Object.keys(cho.e)) {
-    if (k === 'pow') continue; // already handled above
+    if (k === 'pow') continue;
     switch(k) {
       case 'hpB':   P.hp = Math.min(200, P.hp + cho.e[k]); break;
       case 'lk':    P.lk  += cho.e[k]; break;
@@ -422,19 +415,16 @@ function pickChoice(ev, cho) {
     }
   }
 
-  // Handle metMaster flag from choices
   if (cho.mm !== undefined) P.mm = cho.mm;
 
   aLog(cho.lg, "normal");
 
-  // Death check
   if (P.hp <= 0) {
     P.dead = true; P.hp = 0;
     aLog("你受傷過重，身死道消。", "danger");
     uStats(); showSummary(); return;
   }
 
-  // Realm upgrade check
   const nx = REALMS[P.rI + 1];
   if (nx && P.pow >= nx.req) {
     P.rI++;
@@ -467,7 +457,7 @@ function showSummary() {
     '<div class="ss-item"><div class="ss-label">氣運</div><div class="ss-value">' + P.lk + '</div></div>' +
     '<div class="ss-item"><div class="ss-label">悟性</div><div class="ss-value">' + P.int + '</div></div>' +
     '</div>' +
-    '<button onclick="location.reload()" style="background:linear-gradient(135deg,#d4af37,#f0c060);color:#0a0a12;border:none;padding:12px 30px;font-size:1em;font-weight:bold;border-radius:50px;cursor:pointer">🔄 再入輪迴</button>' +
+    '<button onclick="location.reload()" style="background:linear-gradient(135deg,#d4af37,#f0c060);color:#0a0a12;border:none;padding:12px 30px;font-size:1em;font-weight:bold;border-radius:50px;cursor:pointer;-webkit-user-select:none;user-select:none">🔄 再入輪迴</button>' +
     '</div>';
   $('btn-next').style.display = 'none';
   $('choices-container').innerHTML = '';
@@ -479,7 +469,7 @@ function toggleBgm() {
   $('bgm-btn').innerText = (a && !a.paused) ? '🔇 BGM OFF' : '🎵 BGM ON';
 }
 
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && !P.dead && $('btn-next').style.display !== 'none') advanceYear();
 });
 </script>
