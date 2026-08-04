@@ -6,7 +6,7 @@
 <title>AI修仙：無限人生</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#0a0a12;color:#e8e6e3}
+html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#0a0a12;color:#e8e6e3;-webkit-tap-highlight-color:transparent;user-select:none}
 
 /* ===== LANDING PAGE ===== */
 #landing{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100vw;position:relative;overflow:hidden}
@@ -19,14 +19,14 @@ html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang
 .landing-sub{color:#888;font-size:.95em;text-align:center;line-height:1.6}
 
 #enter-btn{background:linear-gradient(135deg,#d4af37,#f0c060);color:#0a0a12;border:none;padding:16px 56px;font-size:1.2em;font-weight:bold;border-radius:50px;cursor:pointer;animation:pulse-glow 2s ease-in-out infinite;transition:transform .2s}
-#enter-btn:hover{transform:scale(1.06)}
+#enter-btn:hover,#enter-btn:active{transform:scale(1.06)}
 @keyframes pulse-glow{0%,100%{box-shadow:0 0 20px rgba(212,175,55,.4),0 0 60px rgba(212,175,55,.15)}50%{box-shadow:0 0 35px rgba(212,175,55,.7),0 0 80px rgba(212,175,55,.3)}}
 
 /* ===== GAME PAGE ===== */
 #game-page{display:none;height:100vh;width:100vw;overflow:hidden}
 .game-layout{display:flex;height:100%;gap:0}
 
-.sidebar{width:260px;min-width:200px;background:#14141f;border-right:1px solid #2a2a3a;display:flex;flex-direction:column;overflow-y:auto;padding:16px 14px}
+.sidebar{width:260px;min-width:200px;background:#14141f;border-right:1px solid #2a2a3a;display:flex;flex-direction:column;overflow-y:auto;padding:16px 14px;-webkit-overflow-scrolling:touch}
 .sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
 
 .sidebar h3{color:#d4af37;text-align:center;font-size:.95em;margin-bottom:10px;letter-spacing:2px}
@@ -47,31 +47,35 @@ html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang
 .realm-feisheng{background:linear-gradient(90deg,rgba(255,215,0,.2),rgba(255,165,0,.2));color:#ffd700;text-shadow:0 0 8px rgba(255,215,0,.4)}
 
 .content{flex:1;display:flex;flex-direction:column;overflow:hidden}
-#log-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+#log-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch}
 .log-entry{padding:10px 14px;background:#1a1a28;border-left:3px solid #555;border-radius:6px;font-size:.9em;line-height:1.7;animation:fadeIn .3s ease-in}
 .log-entry.event{border-left-color:#d4af37;background:rgba(212,175,55,.04)}
 .log-entry.danger{border-left-color:#ff4c4c}.log-entry.system{border-left-color:#4caf50;color:#4caf50}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
+/* Talent selection */
 #talent-panel{padding:20px;background:#14141f;border-bottom:1px solid #2a2a3a}
 .talent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}
-.talent-card{background:#1a1a28;border:2px solid #2a2a3a;border-radius:10px;padding:12px;cursor:pointer;transition:all .2s}
-.talent-card:hover{border-color:#d4af37;background:rgba(212,175,55,.06)}
-.talent-card.selected{border-color:#ffd700;box-shadow:0 0 18px rgba(212,175,55,.25)}
+.talent-card{background:#1a1a28;border:2px solid #2a2a3a;border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s;-webkit-user-select:none;touch-action:manipulation;position:relative}
+.talent-card:hover{border-color:#d4af37;background:rgba(212,175,55,.08)}
+.talent-card.selected{border-color:#ffd700;box-shadow:0 0 18px rgba(212,175,55,.3);background:rgba(212,175,55,.1)}
+.talent-card:active{transform:scale(.97)}
 .talent-name{color:#d4af37;font-weight:bold;margin-bottom:4px}
 .talent-desc{color:#7a7a8e;font-size:.78em;line-height:1.4}
 .talent-stats{color:#6a9f5e;font-size:.72em;margin-top:5px}
 
-.action-bar{padding:12px 20px;background:#14141f;border-top:1px solid #2a2a3a;display:flex;flex-direction:column;gap:8px;align-items:center;min-height:60px;max-height:45vh;overflow-y:auto}
+/* Action bar */
+.action-bar{padding:12px 20px;background:#14141f;border-top:1px solid #2a2a3a;display:flex;flex-direction:column;gap:8px;align-items:center;min-height:60px;max-height:45vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .action-bar::-webkit-scrollbar{width:4px}.action-bar::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
 
 #choices-container{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%}
-.btn-choice{background:#1e1e2e;color:#e8e6e3;border:1px solid #444;padding:9px 18px;border-radius:8px;font-size:.9em;cursor:pointer;transition:all .2s;white-space:nowrap}
-.btn-choice:hover:not(:disabled){background:#2a2a3e;border-color:#d4af37;color:#ffd700;transform:translateY(-1px)}
-.btn-choice:disabled{opacity:.4;cursor:not-allowed}
+.btn-choice{background:#1e1e2e;color:#e8e6e3;border:1px solid #444;padding:9px 18px;border-radius:8px;font-size:.9em;cursor:pointer;transition:all .2s;white-space:nowrap;-webkit-user-select:none;touch-action:manipulation}
+.btn-choice:hover{background:#2a2a3e;border-color:#d4af37;color:#ffd700}
+.btn-choice:active{transform:scale(.96)}
 
 .btn-action{background:linear-gradient(135deg,#2a2a3e,#1e1e2e);color:#e8e6e3;border:1px solid #444;padding:10px 28px;border-radius:8px;font-size:.95em;cursor:pointer;transition:all .2s}
 .btn-action:hover{border-color:#d4af37;color:#ffd700;background:#2a2a3e}
+.btn-action:active{transform:scale(.97)}
 
 .summary-wrap{text-align:center;padding:30px 20px}
 .summary-title{color:#ffd700;font-size:1.4em;margin-bottom:20px;letter-spacing:3px}
@@ -140,7 +144,7 @@ html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang
       <div id="log-panel"></div>
       <div id="talent-panel" style="display:none"><h3 style="color:#d4af37;text-align:center;margin-bottom:4px;font-size:.95em">🌟 選擇天賦</h3><p style="text-align:center;color:#7a7a8e;font-size:.8em">選一個天賦開始你的人生</p><div class="talent-grid" id="talent-grid"></div></div>
       <div class="action-bar">
-        <button id="btn-start" class="btn-action" style="display:none" onclick="confirmTalent()">確認天賦，開始人生</button>
+        <button id="btn-start" class="btn-action" style="display:none" onclick="confirmTalent()">✅ 確認天賦，開始人生</button>
         <button id="btn-next" class="btn-action" style="display:none" onclick="advanceYear()">⏩ 推進下一年</button>
         <div id="choices-container"></div>
       </div>
@@ -186,82 +190,17 @@ const TALENTS = [
 
 // Events: cond = condition function, opts = choices array (FIXED!)
 const EVENTS = [
-  {
-    id:"child_1", t:"神童之兆", ma:3, xa:8, w:8, text:"你自幼聰穎過人，三歲便能識字，五歲已通曉詩書。村中長者皆稱你為神童。",
-    opts:[
-      { tx:"專心讀書", e:{int:15,lk:5}, lg:"你埋首書卷，學識日益深厚。" },
-      { tx:"上山探險", e:{str:10,chr:5}, lg:"你翻山越嶺，身體愈加強健。" }
-    ]
-  },
-  {
-    id:"child_2", t:"山中奇遇", ma:6, xa:10, w:5, text:"你在山中採藥時，發現一株發光的靈芝！",
-    opts:[
-      { tx:"吃下靈芝", e:{hpB:30,lk:10}, lg:"你吞下靈芝，全身暖流湧動！" },
-      { tx:"帶回村中賣錢", e:{lk:-5,chr:10}, lg:"你把靈芝賣給了路過的商人。" }
-    ]
-  },
-  {
-    id:"elder_master", t:"白髮老人", ma:16, xa:25, w:10, cond:(p)=>!p.mm, text:"你在山中採藥時，遇到一位重傷的白髮老人。他看你骨骼驚奇，問你是否願意拜他為師。",
-    opts:[
-      { tx:"立刻磕頭拜師", e:{pow:100,lk:15}, lg:"老人大笑三聲：「好！從今日起老夫便是你的師父！」你正式踏入修仙界！", mm:true },
-      { tx:"覺得是騙子，轉身就走", e:{int:10,str:5}, lg:"你警惕地離開了。雖然錯失仙緣，但你覺得安全第一。" }
-    ]
-  },
-  {
-    id:"cave_heart", t:"洞府悟道", ma:20, xa:100, w:8, rMin:1, text:"你在洞府中打坐修煉，突然靈台清明，彷彿看到了天地間流動的靈氣！",
-    opts:[
-      { tx:"順著靈氣感悟", e:{pow:50,int:15}, lg:"你順著靈氣脈絡感悟，修為精進！" },
-      { tx:"穩紮穩打繼續修煉", e:{pow:30,lk:5}, lg:"你選擇穩健前行。" }
-    ]
-  },
-  {
-    id:"sect_rival", t:"同門鬥法", ma:25, xa:80, w:7, rMin:2, text:"宗门大比即將開始，你的師兄向你發起挑戰！",
-    opts:[
-      { tx:"接受挑戰", e:{pow:80,lk:-10}, lg:"你與師兄大戰三百回合，最終險勝！但經脈受損。" },
-      { tx:"謙讓退避", e:{chr:20,merit:15}, lg:"你選擇退讓。眾人皆讚你不爭之德。" }
-    ]
-  },
-  {
-    id:"ancient_ruins", t:"古蹟探索", ma:40, xa:200, w:6, rMin:3, text:"你發現了一處上古修仙者的洞府遺跡，其中可能有寶物！",
-    opts:[
-      { tx:"冒險探索", e:{pow:150,lk:-20,hpB:-30}, lg:"你在古蹟中遇到重重機關，最終獲得一枚上古丹方！" },
-      { tx:"讓後輩去探索", e:{merit:20,chr:10}, lg:"你將寶物留給年輕人。善因必有善果。" }
-    ]
-  },
-  {
-    id:"heavenly_trial", t:"天劫降臨", ma:60, xa:500, w:4, rMin:4, text:"天地變色！你感受到一股強大的力量正在凝聚——那是渡劫的天象！",
-    opts:[
-      { tx:"迎戰天劫", e:{pow:300,hpB:-50,lk:10}, lg:"你頂著雷霆轟擊，經脈幾近崩斷，但修為大進！" },
-      { tx:"尋求外援", e:{chr:20,merit:20,pow:100}, lg:"你請來多位前輩相助，共渡天劫。" }
-    ]
-  },
-  {
-    id:"death_tribulation", t:"渡劫失敗", ma:30, w:2, rMin:6, cond:(p)=>p.age>=REALMS[p.rI].lifespan*.8, text:"天劫降臨！你雖已準備良久，但天威難測...",
-    opts:[
-      { tx:"拼死一搏", e:{pow:200,hpB:-100}, lg:"你燃盡所有修為迎戰天雷..." },
-      { tx:"坦然面對", e:{merit:30,lk:20}, lg:"你閉目凝神，坦然接受天命。" }
-    ]
-  },
-  {
-    id:"daily_1", t:"日常修煉", ma:0, xa:999, w:5, cond:(p)=>true, text:"今年平平安安地過去了，你在日常修煉中略有心得。",
-    opts:[
-      { tx:"繼續努力", e:{pow:15}, lg:"日積月累，修為穩步上升。" }
-    ]
-  },
-  {
-    id:"daily_2", t:"靈氣潮動", ma:10, xa:999, w:3, rMin:1, cond:(p)=>Math.random()<.3, text:"天地間突然涌現一股濃厚的靈氣！",
-    opts:[
-      { tx:"吸收靈氣", e:{pow:40,lk:5}, lg:"你貪婪地吸收著天地靈氣，修為大增！" },
-      { tx:"閉關苦修", e:{int:10,pow:25}, lg:"你選擇閉關消化。" }
-    ]
-  },
-  {
-    id:"daily_3", t:"妖獸襲村", ma:16, xa:999, w:4, cond:(p)=>Math.random()<.25, text:"一隻低階妖獸闖入村落！",
-    opts:[
-      { tx:"出手降妖", e:{pow:30,lk:-5}, lg:"你一掌擊殺妖獸，但身上也受了些傷。" },
-      { tx:"讓村民躲避", e:{merit:10,chr:10}, lg:"你保護了村民，大家感激不盡。" }
-    ]
-  }
+  { id:"child_1", t:"神童之兆", ma:3, xa:8, w:8, text:"你自幼聰穎過人，三歲便能識字，五歲已通曉詩書。村中長者皆稱你為神童。", opts:[{tx:"專心讀書",e:{int:15,lk:5},lg:"你埋首書卷，學識日益深厚。"},{tx:"上山探險",e:{str:10,chr:5},lg:"你翻山越嶺，身體愈加強健。"}]},
+  { id:"child_2", t:"山中奇遇", ma:6, xa:10, w:5, text:"你在山中採藥時，發現一株發光的靈芝！", opts:[{tx:"吃下靈芝",e:{hpB:30,lk:10},lg:"你吞下靈芝，全身暖流湧動！"},{tx:"帶回村中賣錢",e:{lk:-5,chr:10},lg:"你把靈芝賣給了路過的商人。"}]},
+  { id:"elder_master", t:"白髮老人", ma:16, xa:25, w:10, cond:(p)=>!p.mm, text:"你在山中採藥時，遇到一位重傷的白髮老人。他看你骨骼驚奇，問你是否願意拜他為師。", opts:[{tx:"立刻磕頭拜師",e:{pow:100,lk:15},lg:"老人大笑三聲：「好！從今日起老夫便是你的師父！」你正式踏入修仙界！",mm:true},{tx:"覺得是騙子，轉身就走",e:{int:10,str:5},lg:"你警惕地離開了。雖然錯失仙緣，但你覺得安全第一。"}]},
+  { id:"cave_heart", t:"洞府悟道", ma:20, xa:100, w:8, rMin:1, text:"你在洞府中打坐修煉，突然靈台清明，彷彿看到了天地間流動的靈氣！", opts:[{tx:"順著靈氣感悟",e:{pow:50,int:15},lg:"你順著靈氣脈絡感悟，修為精進！"},{tx:"穩紮穩打繼續修煉",e:{pow:30,lk:5},lg:"你選擇穩健前行。"}]},
+  { id:"sect_rival", t:"同門鬥法", ma:25, xa:80, w:7, rMin:2, text:"宗门大比即將開始，你的師兄向你發起挑戰！", opts:[{tx:"接受挑戰",e:{pow:80,lk:-10},lg:"你與師兄大戰三百回合，最終險勝！但經脈受損。"},{tx:"謙讓退避",e:{chr:20,merit:15},lg:"你選擇退讓。眾人皆讚你不爭之德。"}]},
+  { id:"ancient_ruins", t:"古蹟探索", ma:40, xa:200, w:6, rMin:3, text:"你發現了一處上古修仙者的洞府遺跡，其中可能有寶物！", opts:[{tx:"冒險探索",e:{pow:150,lk:-20,hpB:-30},lg:"你在古蹟中遇到重重機關，最終獲得一枚上古丹方！"},{tx:"讓後輩去探索",e:{merit:20,chr:10},lg:"你將寶物留給年輕人。善因必有善果。"}]},
+  { id:"heavenly_trial", t:"天劫降臨", ma:60, xa:500, w:4, rMin:4, text:"天地變色！你感受到一股強大的力量正在凝聚——那是渡劫的天象！", opts:[{tx:"迎戰天劫",e:{pow:300,hpB:-50,lk:10},lg:"你頂著雷霆轟擊，經脈幾近崩斷，但修為大進！"},{tx:"尋求外援",e:{chr:20,merit:20,pow:100},lg:"你請來多位前輩相助，共渡天劫。"}]},
+  { id:"death_tribulation", t:"渡劫失敗", ma:30, w:2, rMin:6, cond:(p)=>p.age>=REALMS[p.rI].lifespan*.8, text:"天劫降臨！你雖已準備良久，但天威難測...", opts:[{tx:"拼死一搏",e:{pow:200,hpB:-100},lg:"你燃盡所有修為迎戰天雷..."},{tx:"坦然面對",e:{merit:30,lk:20},lg:"你閉目凝神，坦然接受天命。"}]},
+  { id:"daily_1", t:"日常修煉", ma:0, xa:999, w:5, cond:(p)=>true, text:"今年平平安安地過去了，你在日常修煉中略有心得。", opts:[{tx:"繼續努力",e:{pow:15},lg:"日積月累，修為穩步上升。"}]},
+  { id:"daily_2", t:"靈氣潮動", ma:10, xa:999, w:3, rMin:1, cond:(p)=>Math.random()<.3, text:"天地間突然涌現一股濃厚的靈氣！", opts:[{tx:"吸收靈氣",e:{pow:40,lk:5},lg:"你貪婪地吸收著天地靈氣，修為大增！"},{tx:"閉關苦修",e:{int:10,pow:25},lg:"你選擇閉關消化。"}]},
+  { id:"daily_3", t:"妖獸襲村", ma:16, xa:999, w:4, cond:(p)=>Math.random()<.25, text:"一隻低階妖獸闖入村落！", opts:[{tx:"出手降妖",e:{pow:30,lk:-5},lg:"你一掌擊殺妖獸，但身上也受了些傷。"},{tx:"讓村民躲避",e:{merit:10,chr:10},lg:"你保護了村民，大家感激不盡。"}]}
 ];
 
 // ============================================================
@@ -314,7 +253,7 @@ function aLog(t, ty="normal") {
 function startGame() {
   document.getElementById('landing').style.display = 'none';
   const gp = document.getElementById('game-page');
-  gp.style.display = 'block';
+  gp.style.display = 'flex'; // Changed: use flex to match layout
 
   // Random root
   const roll = Math.random();
@@ -328,12 +267,17 @@ function startGame() {
   uStats();
   renderTalents();
   $('talent-panel').style.display = 'block';
-  $('btn-start').style.display = '';
+  $('btn-start').style.display = ''; // Changed: show button immediately
+
+  // Scroll to talent panel on mobile
+  setTimeout(() => { $('log-panel').scrollTop = $('log-panel').scrollHeight; }, 100);
 }
 
 function renderTalents() {
-  const g = $('talent-grid'); g.innerHTML = '';
-  TALENTS.forEach(t => {
+  const g = $('talent-grid');
+  g.innerHTML = '';
+  
+  TALENTS.forEach((t, idx) => {
     let sh = '';
     if (t.e.pow) sh += '修為+' + t.e.pow + ' ';
     if (t.e.lk) sh += '氣運+' + t.e.lk + ' ';
@@ -343,22 +287,33 @@ function renderTalents() {
     if (t.e.hpB) sh += 'HP+' + t.e.hpB + ' ';
     if (t.e.merit) sh += '功德+' + t.e.merit;
 
-    const c = document.createElement('div');
-    c.className = 'talent-card';
-    c.innerHTML = '<div class="talent-name">' + t.name + '</div><div class="talent-desc">' + t.desc + '</div><div class="talent-stats">' + sh.trim() + '</div>';
-    c.onclick = () => {
+    // Use data attribute for ID storage, onclick via delegation
+    const card = document.createElement('div');
+    card.className = 'talent-card';
+    card.setAttribute('data-id', t.id);
+    card.innerHTML = '<div class="talent-name">' + t.name + '</div><div class="talent-desc">' + t.desc + '</div><div class="talent-stats">' + sh.trim() + '</div>';
+    
+    // Desktop: use click event
+    card.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
       P.tId = t.id;
       document.querySelectorAll('.talent-card').forEach(x => x.classList.remove('selected'));
-      c.classList.add('selected');
-    };
-    g.appendChild(c);
+      card.classList.add('selected');
+    });
+    
+    g.appendChild(card);
   });
 }
 
 function confirmTalent() {
-  if (!P.tId) { alert('請選擇一個天賦！'); return; }
+  if (!P.tId) {
+    // If no talent selected, auto-pick first one
+    P.tId = TALENTS[0].id;
+  }
 
   const t = TALENTS.find(x => x.id === P.tId);
+  if (!t) return;
 
   // Apply talent effects with proper key mapping
   for (const k of Object.keys(t.e)) {
@@ -380,6 +335,9 @@ function confirmTalent() {
   $('btn-next').style.display = '';
 
   aLog('天賦覺醒：<strong>' + t.name + '</strong> — ' + t.desc, "system");
+  
+  // Scroll to show first event
+  setTimeout(() => { $('log-panel').scrollTop = $('log-panel').scrollHeight; }, 100);
 }
 
 function advanceYear() {
@@ -436,7 +394,9 @@ function doEvent(ev) {
       const b = document.createElement('button');
       b.className = 'btn-choice';
       b.innerText = '▸ ' + ch.tx;
-      b.onclick = () => pickChoice(ev, ch);
+      // Use pointerdown for instant mobile response
+      b.addEventListener('touchstart', function(e) { e.preventDefault(); pickChoice(ev, ch); }, { passive: false });
+      b.addEventListener('click', function() { if (this.classList.contains('selected')) return; pickChoice(ev, ch); });
       $('choices-container').appendChild(b);
     });
   } else {
@@ -516,7 +476,7 @@ function showSummary() {
 function toggleBgm() {
   const a = $('bgm');
   if (a) { a.paused ? a.play() : a.pause(); }
-  $('bgm-btn').innerText = a && !a.paused ? '🔇 BGM OFF' : '🎵 BGM ON';
+  $('bgm-btn').innerText = (a && !a.paused) ? '🔇 BGM OFF' : '🎵 BGM ON';
 }
 
 document.addEventListener('keydown', e => {
