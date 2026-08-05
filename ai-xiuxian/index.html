@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
 <title>AI修仙：無限人生</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;touch-action:none}
+*{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#0a0a12;color:#e8e6e3;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 
 /* ===== LANDING PAGE ===== */
@@ -138,6 +138,7 @@ html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang
 
     <!-- Content -->
     <div class="content">
+      <audio id="bgm" loop preload="auto"><source src="bgm.ogg" type="audio/ogg"></audio>
       <div id="log-panel"></div>
       <div id="talent-panel" style="display:none"><h3 style="color:#d4af37;text-align:center;margin-bottom:4px;font-size:.95em">🌟 選擇天賦</h3><p style="text-align:center;color:#7a7a8e;font-size:.8em">選一個天賦開始你的人生</p><div class="talent-grid" id="talent-grid"></div></div>
       <div class="action-bar">
@@ -287,17 +288,14 @@ function renderTalents() {
     card.setAttribute('data-id', t.id);
     card.innerHTML = '<div class="talent-name">' + t.name + '</div><div class="talent-desc">' + t.desc + '</div><div class="talent-stats">' + sh.trim() + '</div>';
 
-    // 關鍵修復：用 touchstart + click 雙重監聽
-    const selectTalent = function(e) {
-      e.preventDefault();
+    const selectTalent = function() {
       P.tId = t.id;
       document.querySelectorAll('.talent-card').forEach(function(x) { x.classList.remove('selected'); });
       card.classList.add('selected');
     };
 
-    // touchstart 先觸發（手機快響應）
-    card.addEventListener('touchstart', selectTalent, { passive: false });
-    // click 作為 fallback（桌面）
+    // 用 pointerdown + click 雙重監聽（不 preventDefault，確保手機桌面都正常）
+    card.addEventListener('pointerdown', function() { selectTalent(); });
     card.addEventListener('click', selectTalent);
     
     g.appendChild(card);
@@ -387,9 +385,9 @@ function doEvent(ev) {
       const b = document.createElement('button');
       b.className = 'btn-choice';
       b.innerText = '▸ ' + ch.tx;
-      // 關鍵修復：touchstart + click 雙重監聽
-      const pickHandler = function(e) { e.preventDefault(); pickChoice(ev, ch); };
-      b.addEventListener('touchstart', pickHandler, { passive: false });
+      // pointerdown + click 雙重監聽（不 preventDefault）
+      const pickHandler = function() { pickChoice(ev, ch); };
+      b.addEventListener('pointerdown', pickHandler);
       b.addEventListener('click', pickHandler);
       $('choices-container').appendChild(b);
     });
