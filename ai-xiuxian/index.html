@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
+<title>AI修仙：無限人生</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#0a0a12;color:#e8e6e3;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+
+/* ===== LANDING PAGE ===== */
+#landing{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100vw;position:relative;overflow:hidden}
+#landing::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(212,175,55,.06) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(99,102,241,.05) 0%,transparent 50%);animation:land-drift 20s ease-in-out infinite alternate;pointer-events:none;z-index:0}
+@keyframes land-drift{0%{transform:translate(0,0)}100%{transform:translate(-30px,-20px)}}
+
+.landing-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:24px;max-width:520px;width:90%;padding:20px}
+.poster-img{width:100%;max-height:45vh;object-fit:contain;border-radius:16px;box-shadow:0 8px 40px rgba(212,175,55,.15);background:#111}
+.landing-title{font-size:clamp(1.8em,5vw,3em);color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.4),0 0 60px rgba(212,175,55,.2);letter-spacing:6px;font-weight:bold}
+.landing-sub{color:#888;font-size:.95em;text-align:center;line-height:1.6}
+
+#enter-btn{background:linear-gradient(135deg,#d4af37,#f0c060);color:#0a0a12;border:none;padding:16px 56px;font-size:1.2em;font-weight:bold;border-radius:50px;cursor:pointer;animation:pulse-glow 2s ease-in-out infinite;transition:transform .2s;-webkit-tap-highlight-color:transparent}
+#enter-btn:hover,#enter-btn:active{transform:scale(1.06)}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 20px rgba(212,175,55,.4),0 0 60px rgba(212,175,55,.15)}50%{box-shadow:0 0 35px rgba(212,175,55,.7),0 0 80px rgba(212,175,55,.3)}}
+
+/* ===== GAME PAGE ===== */
+#game-page{display:none;height:100vh;width:100vw;overflow:hidden}
+.game-layout{display:flex;height:100%;gap:0}
+
+.sidebar{width:260px;min-width:200px;background:#14141f;border-right:1px solid #2a2a3a;display:flex;flex-direction:column;overflow-y:auto;padding:16px 14px;-webkit-overflow-scrolling:touch}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+.sidebar h3{color:#d4af37;text-align:center;font-size:.95em;margin-bottom:10px;letter-spacing:2px}
+
+.stat-row{display:flex;justify-content:space-between;font-size:.82em;padding:3px 0;border-bottom:1px dashed #2a2a3a}
+.stat-label{color:#7a7a8e}.stat-value{color:#d4af37;font-weight:bold;min-width:40px;text-align:right}
+
+.bar-wrap{margin:6px 0 2px}
+.bar-label{display:flex;justify-content:space-between;font-size:.75em;color:#7a7a8e;margin-bottom:2px}
+.bar-track{height:6px;background:#1a1a2a;border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+
+.realm-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.78em;font-weight:bold;margin-left:6px}
+.realm-fanren{background:#333;color:#aaa}.realm-lianqi{background:rgba(100,200,100,.15);color:#6c6}
+.realm-zhuji{background:rgba(100,150,255,.15);color:#6af}.realm-jindan{background:rgba(255,200,50,.15);color:#fc3}
+.realm-yuanying{background:rgba(200,100,255,.15);color:#c6f}.realm-huashen{background:rgba(255,100,100,.15);color:#f66}
+.realm-dujie{background:rgba(255,255,255,.12);color:#fff;text-shadow:0 0 6px rgba(255,255,255,.4)}
+.realm-feisheng{background:linear-gradient(90deg,rgba(255,215,0,.2),rgba(255,165,0,.2));color:#ffd700;text-shadow:0 0 8px rgba(255,215,0,.4)}
+
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#log-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch}
+.log-entry{padding:10px 14px;background:#1a1a28;border-left:3px solid #555;border-radius:6px;font-size:.9em;line-height:1.7;animation:fadeIn .3s ease-in}
+.log-entry.event{border-left-color:#d4af37;background:rgba(212,175,55,.04)}
+.log-entry.danger{border-left-color:#ff4c4c}.log-entry.system{border-left-color:#4caf50;color:#4caf50}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Talent selection — 關鍵：touch-action: manipulation */
+#talent-panel{padding:20px;background:#14141f;border-bottom:1px solid #2a2a3a;-webkit-tap-highlight-color:transparent}
+.talent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}
+.talent-card{background:#1a1a28;border:2px solid #2a2a3a;border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s;-webkit-user-select:none;user-select:none;touch-action:manipulation;position:relative}
+.talent-card:hover{border-color:#d4af37;background:rgba(212,175,55,.08)}
+.talent-card.selected{border-color:#ffd700;box-shadow:0 0 18px rgba(212,175,55,.3);background:rgba(212,175,55,.1)}
+.talent-name{color:#d4af37;font-weight:bold;margin-bottom:4px}
+.talent-desc{color:#7a7a8e;font-size:.78em;line-height:1.4}
+.talent-stats{color:#6a9f5e;font-size:.72em;margin-top:5px}
+
+/* Action bar — 關鍵：touch-action: manipulation */
+.action-bar{padding:12px 20px;background:#14141f;border-top:1px solid #2a2a3a;display:flex;flex-direction:column;gap:8px;align-items:center;min-height:60px;max-height:45vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.action-bar::-webkit-scrollbar{width:4px}.action-bar::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+#choices-container{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%}
+.btn-choice{background:#1e1e2e;color:#e8e6e3;border:1px solid #444;padding:9px 18px;border-radius:8px;font-size:.9em;cursor:pointer;transition:all .2s;white-space:nowrap;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.btn-choice:hover{background:#2a2a3e;border-color:#d4af37;color:#ffd700}
+
+.btn-action{background:linear-gradient(135deg,#2a2a3e,#1e1e2e);color:#e8e6e3;border:1px solid #444;padding:10px 28px;border-radius:8px;font-size:.95em;cursor:pointer;transition:all .2s;-webkit-user-select:none;user-select:none}
+.btn-action:hover{border-color:#d4af37;color:#ffd700;background:#2a2a3e}
+
+.summary-wrap{text-align:center;padding:30px 20px}
+.summary-title{color:#ffd700;font-size:1.4em;margin-bottom:20px;letter-spacing:3px}
+.summary-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:500px;margin:0 auto 20px}
+.ss-item{background:#1a1a28;padding:14px;border-radius:10px;text-align:center}
+.ss-label{color:#7a7a8e;font-size:.8em}.ss-value{color:#ffd700;font-weight:bold;font-size:1.3em;margin-top:4px}
+
+@media(max-width:768px){
+  .game-layout{flex-direction:column}
+  .sidebar{width:100%;min-width:0;max-height:25vh;border-right:none;border-bottom:1px solid #2a2a3a;padding:10px}
+  .content{min-height:0}
+  #log-panel{padding:12px}
+  .action-bar{max-height:40vh}
+  .talent-grid{grid-template-columns:repeat(2,1fr)}
+  .poster-img{max-height:35vh}
+  .landing-title{letter-spacing:3px}
+}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- LANDING -->
+<div id="landing">
+  <div class="landing-inner">
+    <img class="poster-img" src="poster.png" alt="AI修仙封面" onerror="this.style.display='none'">
+    <h1 class="landing-title">AI修仙：無限人生</h1>
+    <p class="landing-sub">每一次輪迴，都是嶄新的仙途<br><span style="color:#555;font-size:.85em">— 點擊下方按鈕開始你的修仙之旅 —</span></p>
+    <button id="enter-btn" onclick="startGame()">⚡ 進入遊戲 ⚡</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-page">
+  <div class="game-layout">
+    <!-- Stats sidebar -->
+    <div class="sidebar">
+      <h3>🧘 人物狀態</h3>
+      <div class="stat-row"><span class="stat-label">年齡</span><span id="s-age" class="stat-value">0</span></div>
+      <div class="stat-row"><span class="stat-label">壽元</span><span id="s-lifespan" class="stat-value">80</span></div>
+      <div class="stat-row"><span class="stat-label">境界</span><span id="s-realm" class="realm-badge realm-fanren">凡人</span></div>
+      <div class="stat-row"><span class="stat-label">靈根</span><span id="s-root" class="stat-value">-</span></div>
+      <hr style="border-color:#2a2a3a;margin:8px 0">
+
+      <div class="bar-wrap"><div class="bar-label"><span>生命 HP</span><span id="s-hp-text">100/100</span></div><div class="bar-track"><div id="bar-hp" class="bar-fill" style="width:100%;background:linear-gradient(90deg,#4caf50,#8bc34a)"></div></div></div>
+      <div class="stat-row"><span class="stat-label">修為</span><span id="s-power" class="stat-value">0</span></div>
+      <div class="bar-wrap"><div class="bar-label"><span>突破進度</span><span id="s-realm-text">0%</span></div><div class="bar-track"><div id="bar-power" class="bar-fill" style="width:0%;background:linear-gradient(90deg,#2196f3,#4fc3f7)"></div></div></div>
+
+      <hr style="border-color:#2a2a3a;margin:8px 0">
+      <div class="stat-row"><span class="stat-label">氣運</span><span id="s-luck" class="stat-value">50</span></div>
+      <div class="stat-row"><span class="stat-label">悟性</span><span id="s-intel" class="stat-value">50</span></div>
+      <div class="stat-row"><span class="stat-label">魅力</span><span id="s-charm" class="stat-value">50</span></div>
+      <div class="stat-row"><span class="stat-label">根骨</span><span id="s-str" class="stat-value">50</span></div>
+      <div class="stat-row"><span class="stat-label">功德</span><span id="s-merit" class="stat-value">0</span></div>
+
+      <div style="margin-top:auto;padding-top:12px;text-align:center;border-top:1px solid #2a2a3a">
+        <button onclick="toggleBgm()" id="bgm-btn" style="background:none;border:1px solid #444;color:#888;padding:5px 16px;border-radius:20px;font-size:.8em;cursor:pointer;-webkit-user-select:none;user-select:none">🎵 BGM</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <audio id="bgm" loop preload="auto"><source src="bgm.ogg" type="audio/ogg"></audio>
+      <div id="log-panel"></div>
+      <div id="talent-panel" style="display:none"><h3 style="color:#d4af37;text-align:center;margin-bottom:4px;font-size:.95em">🌟 選擇天賦</h3><p style="text-align:center;color:#7a7a8e;font-size:.8em">選一個天賦開始你的人生</p><div class="talent-grid" id="talent-grid"></div></div>
+      <div class="action-bar">
+        <button id="btn-start" class="btn-action" style="display:none" onclick="confirmTalent()">✅ 確認天賦，開始人生</button>
+        <button id="btn-next" class="btn-action" style="display:none" onclick="advanceYear()">⏩ 推進下一年</button>
+        <div id="choices-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const REALMS = [
+  { name:"凡人",   req:0,     lifespan:80,  cls:"realm-fanren" },
+  { name:"練氣期", req:200,   lifespan:150, cls:"realm-lianqi" },
+  { name:"築基期", req:800,   lifespan:300, cls:"realm-zhuji" },
+  { name:"金丹期", req:2500,  lifespan:600, cls:"realm-jindan" },
+  { name:"元嬰期", req:8000,  lifespan:1200,cls:"realm-yuanying" },
+  { name:"化神期", req:25000, lifespan:3000,cls:"realm-huashen" },
+  { name:"渡劫期", req:80000, lifespan:5000,cls:"realm-dujie" },
+  { name:"飛升",   req:999999,lifespan:9999,cls:"realm-feisheng" }
+];
+
+const ROOTS = [
+  { n:"天靈根", m:.05, pMul:1.8, lkB:30 },
+  { n:"變異靈根",m:.10,pMul:1.5, lkB:20 },
+  { n:"真靈根",  m:.30,pMul:1.3, lkB:10 },
+  { n:"偽靈根",  m:.35,pMul:.8,  lkB:-5 },
+  { n:"無靈根",  m:.20,pMul:.3,  lkB:0 }
+];
+
+const TALENTS = [
+  { id:"sword_genius",   name:"劍道天賦",    desc:"天生與劍有緣，修煉速度極快", e:{pMul:1.5,str:30,int:-10} },
+  { id:"fortune_blessed",name:"氣運加身",    desc:"天生好運，機遇無盡",         e:{lk:60,chr:20,pMul:.9} },
+  { id:"ancient_knowledge",name:"上古傳承",   desc:"體內封印著上古大能的記憶",   e:{int:50,pow:100,str:-10} },
+  { id:"body_refiner",   name:"體修之體",    desc:"肉身強橫，防禦驚人",         e:{hpB:50,str:40,lk:-20} },
+  { id:"pill_alchemist", name:"丹道奇才",    desc:"天生精通煉丹術",             e:{int:30,lk:10,chr:20} },
+  { id:"mystic_sense",   name:"靈覺通玄",    desc:"對天地靈氣極為敏感，觸發率極高",e:{lk:40,int:30,str:-15} },
+  { id:"demon_blood",    name:"魔血轉世",    desc:"體內流淌著魔族之血，危險而強大",e:{pMul:2.0,chr:-30,lk:-10} },
+  { id:"buddhist_karma", name:"佛門善根",    desc:"前世是得道高僧，功德深厚",   e:{merit:50,lk:30,hpB:20} },
+  { id:"heavenly_forge", name:"天工開物",    desc:"煉器成癡，萬物皆可煉",       e:{int:40,str:20,pow:50} },
+  { id:"void_affinity",  name:"虛空之體",    desc:"天生亲和空間之力，修煉極快",   e:{pMul:1.6} }
+];
+
+const EVENTS = [
+  { id:"child_1", t:"神童之兆", ma:3, xa:8, w:8, text:"你自幼聰穎過人，三歲便能識字，五歲已通曉詩書。村中長者皆稱你為神童。", opts:[{tx:"專心讀書",e:{int:15,lk:5},lg:"你埋首書卷，學識日益深厚。"},{tx:"上山探險",e:{str:10,chr:5},lg:"你翻山越嶺，身體愈加強健。"}]},
+  { id:"child_2", t:"山中奇遇", ma:6, xa:10, w:5, text:"你在山中採藥時，發現一株發光的靈芝！", opts:[{tx:"吃下靈芝",e:{hpB:30,lk:10},lg:"你吞下靈芝，全身暖流湧動！"},{tx:"帶回村中賣錢",e:{lk:-5,chr:10},lg:"你把靈芝賣給了路過的商人。"}]},
+  { id:"elder_master", t:"白髮老人", ma:16, xa:25, w:10, cond:(p)=>!p.mm, text:"你在山中採藥時，遇到一位重傷的白髮老人。他看你骨骼驚奇，問你是否願意拜他為師。", opts:[{tx:"立刻磕頭拜師",e:{pow:100,lk:15},lg:"老人大笑三聲：「好！從今日起老夫便是你的師父！」你正式踏入修仙界！",mm:true},{tx:"覺得是騙子，轉身就走",e:{int:10,str:5},lg:"你警惕地離開了。雖然錯失仙緣，但你覺得安全第一。"}]},
+  { id:"cave_heart", t:"洞府悟道", ma:20, xa:100, w:8, rMin:1, text:"你在洞府中打坐修煉，突然靈台清明，彷彿看到了天地間流動的靈氣！", opts:[{tx:"順著靈氣感悟",e:{pow:50,int:15},lg:"你順著靈氣脈絡感悟，修為精進！"},{tx:"穩紮穩打繼續修煉",e:{pow:30,lk:5},lg:"你選擇穩健前行。"}]},
+  { id:"sect_rival", t:"同門鬥法", ma:25, xa:80, w:7, rMin:2, text:"宗门大比即將開始，你的師兄向你發起挑戰！", opts:[{tx:"接受挑戰",e:{pow:80,lk:-10},lg:"你與師兄大戰三百回合，最終險勝！但經脈受損。"},{tx:"謙讓退避",e:{chr:20,merit:15},lg:"你選擇退讓。眾人皆讚你不爭之德。"}]},
+  { id:"ancient_ruins", t:"古蹟探索", ma:40, xa:200, w:6, rMin:3, text:"你發現了一處上古修仙者的洞府遺跡，其中可能有寶物！", opts:[{tx:"冒險探索",e:{pow:150,lk:-20,hpB:-30},lg:"你在古蹟中遇到重重機關，最終獲得一枚上古丹方！"},{tx:"讓後輩去探索",e:{merit:20,chr:10},lg:"你將寶物留給年輕人。善因必有善果。"}]},
+  { id:"heavenly_trial", t:"天劫降臨", ma:60, xa:500, w:4, rMin:4, text:"天地變色！你感受到一股強大的力量正在凝聚——那是渡劫的天象！", opts:[{tx:"迎戰天劫",e:{pow:300,hpB:-50,lk:10},lg:"你頂著雷霆轟擊，經脈幾近崩斷，但修為大進！"},{tx:"尋求外援",e:{chr:20,merit:20,pow:100},lg:"你請來多位前輩相助，共渡天劫。"}]},
+  { id:"death_tribulation", t:"渡劫失敗", ma:30, w:2, rMin:6, cond:(p)=>p.age>=REALMS[p.rI].lifespan*.8, text:"天劫降臨！你雖已準備良久，但天威難測...", opts:[{tx:"拼死一搏",e:{pow:200,hpB:-100},lg:"你燃盡所有修為迎戰天雷..."},{tx:"坦然面對",e:{merit:30,lk:20},lg:"你閉目凝神，坦然接受天命。"}]},
+  { id:"daily_1", t:"日常修煉", ma:0, xa:999, w:5, cond:(p)=>true, text:"今年平平安安地過去了，你在日常修煉中略有心得。", opts:[{tx:"繼續努力",e:{pow:15},lg:"日積月累，修為穩步上升。"}]},
+  { id:"daily_2", t:"靈氣潮動", ma:10, xa:999, w:3, rMin:1, cond:(p)=>Math.random()<.3, text:"天地間突然涌現一股濃厚的靈氣！", opts:[{tx:"吸收靈氣",e:{pow:40,lk:5},lg:"你貪婪地吸收著天地靈氣，修為大增！"},{tx:"閉關苦修",e:{int:10,pow:25},lg:"你選擇閉關消化。"}]},
+  { id:"daily_3", t:"妖獸襲村", ma:16, xa:999, w:4, cond:(p)=>Math.random()<.25, text:"一隻低階妖獸闖入村落！", opts:[{tx:"出手降妖",e:{pow:30,lk:-5},lg:"你一掌擊殺妖獸，但身上也受了些傷。"},{tx:"讓村民躲避",e:{merit:10,chr:10},lg:"你保護了村民，大家感激不盡。"}]}
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let P = { age:0, hp:100, pow:0, lk:50, int:50, chr:50, str:50, merit:0, root:"", rI:0, dead:false, tId:null, mm:false, trig:[], _pm:1 };
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+const $ = id => document.getElementById(id);
+
+function uStats() {
+  $('s-age').innerText = P.age;
+  const r = REALMS[P.rI];
+  $('s-lifespan').innerText = r.lifespan === 9999 ? '∞' : r.lifespan;
+  const rb = $('s-realm'); rb.className = 'realm-badge ' + r.cls; rb.innerText = r.name;
+  $('s-root').innerText = P.root || '-';
+  $('s-hp-text').innerText = Math.max(0, P.hp) + '/100';
+  $('s-power').innerText = P.pow;
+  $('s-luck').innerText = P.lk; $('s-intel').innerText = P.int;
+  $('s-charm').innerText = P.chr; $('s-str').innerText = P.str; $('s-merit').innerText = P.merit;
+
+  const hp = Math.max(0, P.hp);
+  $('bar-hp').style.width = hp + '%';
+  $('bar-hp').style.background = hp > 60 ? 'linear-gradient(90deg,#4caf50,#8bc34a)' : hp > 30 ? '#ff9800' : 'linear-gradient(90deg,#f44336,#ff5722)';
+
+  const nx = REALMS[P.rI + 1];
+  if (nx) {
+    const pct = Math.min(100, ((P.pow - REALMS[P.rI].req) / (nx.req - REALMS[P.rI].req)) * 100);
+    $('bar-power').style.width = pct + '%';
+    $('s-realm-text').innerText = '突破需 ' + nx.req + '（' + pct.toFixed(0) + '%）';
+  } else {
+    $('bar-power').style.width = '100%';
+    $('s-realm-text').innerText = '已達極致';
+  }
+}
+
+function aLog(t, ty="normal") {
+  const el = document.createElement('div');
+  el.className = 'log-entry ' + ty;
+  el.innerHTML = '<strong>【' + P.age + '歲 · ' + REALMS[P.rI].name + '】</strong><br>' + t;
+  $('log-panel').appendChild(el);
+  $('log-panel').scrollTop = $('log-panel').scrollHeight;
+}
+
+// ============================================================
+// GAME FLOW
+// ============================================================
+function startGame() {
+  document.getElementById('landing').style.display = 'none';
+  const gp = document.getElementById('game-page');
+  gp.style.display = 'flex';
+
+  // Random root
+  const roll = Math.random();
+  let cum = 0; P.root = "真靈根";
+  for (const r of ROOTS) { cum += r.m; if (roll < cum) { P.root = r.n; break; } }
+  const rd = ROOTS.find(r => r.n === P.root);
+  P.lk += rd.lkB;
+
+  $('log-panel').innerHTML = '';
+  aLog('你出生了。天賦：<strong>' + P.root + '</strong>', "system");
+  uStats();
+  renderTalents();
+  $('talent-panel').style.display = 'block';
+  $('btn-start').style.display = '';
+
+  setTimeout(() => { $('log-panel').scrollTop = $('log-panel').scrollHeight; }, 100);
+}
+
+function renderTalents() {
+  const g = $('talent-grid');
+  g.innerHTML = '';
+  
+  TALENTS.forEach((t) => {
+    let sh = '';
+    if (t.e.pow) sh += '修為+' + t.e.pow + ' ';
+    if (t.e.lk) sh += '氣運+' + t.e.lk + ' ';
+    if (t.e.int) sh += '悟性+' + t.e.int + ' ';
+    if (t.e.chr) sh += '魅力+' + t.e.chr + ' ';
+    if (t.e.str) sh += '根骨+' + t.e.str + ' ';
+    if (t.e.hpB) sh += 'HP+' + t.e.hpB + ' ';
+    if (t.e.merit) sh += '功德+' + t.e.merit;
+
+    const card = document.createElement('div');
+    card.className = 'talent-card';
+    card.setAttribute('data-id', t.id);
+    card.innerHTML = '<div class="talent-name">' + t.name + '</div><div class="talent-desc">' + t.desc + '</div><div class="talent-stats">' + sh.trim() + '</div>';
+
+    const selectTalent = function() {
+      P.tId = t.id;
+      document.querySelectorAll('.talent-card').forEach(function(x) { x.classList.remove('selected'); });
+      card.classList.add('selected');
+    };
+
+    // 用 pointerdown + click 雙重監聽（不 preventDefault，確保手機桌面都正常）
+    card.addEventListener('pointerdown', function() { selectTalent(); });
+    card.addEventListener('click', selectTalent);
+    
+    g.appendChild(card);
+  });
+}
+
+function confirmTalent() {
+  if (!P.tId) {
+    P.tId = TALENTS[0].id;
+  }
+
+  const t = TALENTS.find(function(x) { return x.id === P.tId; });
+  if (!t) return;
+
+  // Apply talent effects
+  for (const k of Object.keys(t.e)) {
+    const v = t.e[k];
+    switch(k) {
+      case 'pow':     P.pow += v; break;
+      case 'pMul':    P._pm *= v; break;
+      case 'hpB':     P.hp = Math.min(200, P.hp + v); break;
+      case 'lk':      P.lk  += v; break;
+      case 'int':     P.int += v; break;
+      case 'chr':     P.chr += v; break;
+      case 'str':     P.str += v; break;
+      case 'merit':   P.merit += v; break;
+    }
+  }
+
+  $('talent-panel').style.display = 'none';
+  $('btn-start').style.display = 'none';
+  $('btn-next').style.display = '';
+
+  aLog('天賦覺醒：<strong>' + t.name + '</strong> — ' + t.desc, "system");
+  
+  setTimeout(() => { $('log-panel').scrollTop = $('log-panel').scrollHeight; }, 100);
+}
+
+function advanceYear() {
+  if (P.dead) return;
+  P.age++;
+  const mx = REALMS[P.rI].lifespan;
+
+  if (P.age > mx && P.rI < REALMS.length - 1) {
+    P.dead = true; P.hp = 0;
+    aLog("大限已至，壽元耗盡。你坐化於天地之間。", "danger");
+    uStats(); showSummary(); return;
+  }
+
+  if (P.hp > 0 && P.hp < 100) P.hp += 5;
+  if (P.hp > 200) P.hp = 200;
+
+  triggerEvent();
+}
+
+function triggerEvent() {
+  const valid = EVENTS.filter(function(e) {
+    return e.ma <= P.age &&
+      (!e.xa || P.age <= e.xa) &&
+      (!e.rMin || P.rI >= e.rMin) &&
+      (!e.cond || e.cond(P)) &&
+      !P.trig.includes(e.id);
+  });
+
+  if (valid.length === 0) {
+    aLog("平靜的一年，無事發生。", "normal");
+    uStats(); return;
+  }
+
+  const tw = valid.reduce(function(s, e) { return s + (e.w || 1); }, 0);
+  let roll = Math.random() * tw;
+  for (const ev of valid) {
+    roll -= (ev.w || 1);
+    if (roll <= 0) { P.trig.push(ev.id); doEvent(ev); return; }
+  }
+  P.trig.push(valid[valid.length - 1].id);
+  doEvent(valid[valid.length - 1]);
+}
+
+function doEvent(ev) {
+  aLog('<strong>📖 ' + ev.t + '</strong><br>' + ev.text, "event");
+
+  if (ev.opts && ev.opts.length > 0) {
+    $('btn-next').style.display = 'none';
+    $('choices-container').innerHTML = '';
+    ev.opts.forEach(function(ch) {
+      const b = document.createElement('button');
+      b.className = 'btn-choice';
+      b.innerText = '▸ ' + ch.tx;
+      // pointerdown + click 雙重監聽（不 preventDefault）
+      const pickHandler = function() { pickChoice(ev, ch); };
+      b.addEventListener('pointerdown', pickHandler);
+      b.addEventListener('click', pickHandler);
+      $('choices-container').appendChild(b);
+    });
+  } else {
+    aLog("（無選擇，自動繼續）", "normal");
+    uStats();
+  }
+}
+
+function pickChoice(ev, cho) {
+  if (cho.e.pow && P._pm) P.pow += Math.floor(cho.e.pow * P._pm);
+  else if (cho.e.pow) P.pow += cho.e.pow;
+
+  for (const k of Object.keys(cho.e)) {
+    if (k === 'pow') continue;
+    switch(k) {
+      case 'hpB':   P.hp = Math.min(200, P.hp + cho.e[k]); break;
+      case 'lk':    P.lk  += cho.e[k]; break;
+      case 'int':   P.int += cho.e[k]; break;
+      case 'chr':   P.chr += cho.e[k]; break;
+      case 'str':   P.str += cho.e[k]; break;
+      case 'merit': P.merit += cho.e[k]; break;
+    }
+  }
+
+  if (cho.mm !== undefined) P.mm = cho.mm;
+
+  aLog(cho.lg, "normal");
+
+  if (P.hp <= 0) {
+    P.dead = true; P.hp = 0;
+    aLog("你受傷過重，身死道消。", "danger");
+    uStats(); showSummary(); return;
+  }
+
+  const nx = REALMS[P.rI + 1];
+  if (nx && P.pow >= nx.req) {
+    P.rI++;
+    P.hp = Math.min(200, P.hp + 50);
+    aLog('🌟 <strong>【境界突破】</strong>天降祥瑞！你成功突破至<strong>' + nx.name + '</strong>，壽元大增！', "system");
+    if (P.rI === REALMS.length - 1) {
+      aLog("🔥 <strong>恭喜你飛升仙界！你已超越凡人極限，踏入仙道終極境界！</strong>", "system");
+      P.dead = true;
+      uStats();
+      setTimeout(showSummary, 2000);
+      return;
+    }
+  }
+
+  uStats();
+  $('choices-container').innerHTML = '';
+  $('btn-next').style.display = '';
+}
+
+function showSummary() {
+  const dc = P.hp <= 0 ? "戰鬥身亡" : (P.rI === REALMS.length - 1 ? "飛升仙界" : "壽元耗盡");
+  $('log-panel').innerHTML = '<div class="summary-wrap">' +
+    '<div class="summary-title">📜 人生紀錄</div>' +
+    '<p style="color:#888;margin-bottom:20px">' + dc + '</p>' +
+    '<div class="summary-stats">' +
+    '<div class="ss-item"><div class="ss-label">最終境界</div><div class="ss-value">' + REALMS[P.rI].name + '</div></div>' +
+    '<div class="ss-item"><div class="ss-label">享年</div><div class="ss-value">' + P.age + '歲</div></div>' +
+    '<div class="ss-item"><div class="ss-label">靈根</div><div class="ss-value">' + (P.root || '-') + '</div></div>' +
+    '<div class="ss-item"><div class="ss-label">修為總計</div><div class="ss-value">' + P.pow.toLocaleString() + '</div></div>' +
+    '<div class="ss-item"><div class="ss-label">氣運</div><div class="ss-value">' + P.lk + '</div></div>' +
+    '<div class="ss-item"><div class="ss-label">悟性</div><div class="ss-value">' + P.int + '</div></div>' +
+    '</div>' +
+    '<button onclick="location.reload()" style="background:linear-gradient(135deg,#d4af37,#f0c060);color:#0a0a12;border:none;padding:12px 30px;font-size:1em;font-weight:bold;border-radius:50px;cursor:pointer;-webkit-user-select:none;user-select:none">🔄 再入輪迴</button>' +
+    '</div>';
+  $('btn-next').style.display = 'none';
+  $('choices-container').innerHTML = '';
+}
+
+function toggleBgm() {
+  const a = $('bgm');
+  if (a) { a.paused ? a.play() : a.pause(); }
+  $('bgm-btn').innerText = (a && !a.paused) ? '🔇 BGM OFF' : '🎵 BGM ON';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !P.dead && $('btn-next').style.display !== 'none') advanceYear();
+});
+</script>
+</body>
+</html>
